@@ -55,7 +55,8 @@ class PlayerSourceList(QtGui.QListWidget):
 class PlayerSongTable(QtGui.QTableWidget):
     def __init__(self):
         super(PlayerSongTable, self).__init__()
-        self.setColumnCount(4)
+        self.setColumnCount(5)
+        self.setHorizontalHeaderLabels (("Title", "Artist", "Album", "Genre", "Time"))
 
 class PlayerMenuBar(QtGui.QMenuBar):
     def __init__(self):
