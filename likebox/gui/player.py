@@ -8,10 +8,11 @@ class Player(QtGui.QMainWindow):
     stop = Event()
     pause = Event()
 
-    def __init__(self):
+    def __init__(self, model):
         super(Player, self).__init__()
 
         self.setGeometry(100, 100, 700, 500)
+        self._model = model
         self.setWindowTitle('Likebox')
 
         self._controls = PlayerControls()
@@ -34,6 +35,14 @@ class Player(QtGui.QMainWindow):
         self.setMenuBar(self._menubar)
         vbox.addWidget(self._playlistpicker)
 
+        self.load_data()
+
+    def load_data(self):
+        for playlist in self._model.playlists:
+            print playlist
+            self._sourcelist.add_playlist(playlist['playlist'])
+            self._playlistpicker.add_playlist(playlist['playlist'])
+
 class PlayerControls(QtGui.QWidget):
     def __init__(self):
         super(PlayerControls, self).__init__()
@@ -51,7 +60,9 @@ class PlayerControls(QtGui.QWidget):
 class PlayerSourceList(QtGui.QListWidget):
     def __init__(self):
         super(PlayerSourceList, self).__init__()
-        QtGui.QListWidgetItem("Oak", self)
+
+    def add_playlist(self, name):
+        QtGui.QListWidgetItem(name, self)
 
 
 class PlayerSongTable(QtGui.QTableWidget):
