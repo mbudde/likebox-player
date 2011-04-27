@@ -12,9 +12,6 @@ class Player(QtGui.QMainWindow):
     def __init__(self):
         super(Player, self).__init__()
 
-        self.setGeometry(300, 300, 250, 150)
-        self.setWindowTitle('Quit button')
-
         self._controls = PlayerControls()
         self._sourcelist = PlayerSourceList()
         self._songtable = PlayerSongTable()
@@ -25,12 +22,10 @@ class Player(QtGui.QMainWindow):
         vbox = QtGui.QVBoxLayout(mainWidget)
         vbox.addWidget(self._controls, 0)
 
-        lowerWidget = QtGui.QWidget()
-        hbox = QtGui.QHBoxLayout(lowerWidget)
-        hbox.addWidget(self._sourcelist)
-        hbox.addWidget(self._songtable)
-        vbox.addWidget(lowerWidget, 1)
-
+        splitter = QtGui.QSplitter(QtCore.Qt.Horizontal)
+        splitter.addWidget(self._sourcelist)
+        splitter.addWidget(self._songtable)
+        vbox.addWidget(splitter, 1)
 
 class PlayerControls(QtGui.QWidget):
     def __init__(self):
