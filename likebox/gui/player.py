@@ -23,13 +23,13 @@ class Player(QtGui.QMainWindow):
         self.setCentralWidget(mainWidget)
 
         vbox = QtGui.QVBoxLayout(mainWidget)
-        vbox.addWidget(self._controls)
+        vbox.addWidget(self._controls, 0)
 
         lowerWidget = QtGui.QWidget()
         hbox = QtGui.QHBoxLayout(lowerWidget)
         hbox.addWidget(self._sourcelist)
         hbox.addWidget(self._songtable)
-        vbox.addWidget(lowerWidget)
+        vbox.addWidget(lowerWidget, 1)
 
 
 class PlayerControls(QtGui.QWidget):
@@ -38,11 +38,10 @@ class PlayerControls(QtGui.QWidget):
 
         hbox = QtGui.QHBoxLayout(self)
         play = QtGui.QPushButton('Play')
-        play.setGeometry(10, 10, 60, 35)
         stop = QtGui.QPushButton('Stop')
-        stop.setGeometry(10, 10, 60, 35)
         hbox.addWidget(play)
         hbox.addWidget(stop)
+        hbox.addStretch(1)
 
         # self.connect(quit, QtCore.SIGNAL('clicked()'),
                      # QtGui.qApp, QtCore.SLOT('quit()'))
