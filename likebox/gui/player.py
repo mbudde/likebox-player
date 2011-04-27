@@ -4,13 +4,15 @@ from nmevent import Event
 
 class Player(QtGui.QMainWindow):
 
-    playing = Event()
-    stopped = Event()
-    paused = Event()
-    quit = Event()
+    play = Event()
+    stop = Event()
+    pause = Event()
 
     def __init__(self):
         super(Player, self).__init__()
+
+        self.setGeometry(100, 100, 800, 600)
+        self.setWindowTitle('Likebox')
 
         self._controls = PlayerControls()
         self._sourcelist = PlayerSourceList()
