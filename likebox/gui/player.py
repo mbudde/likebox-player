@@ -12,6 +12,9 @@ class Player(QtGui.QMainWindow):
     def __init__(self):
         super(Player, self).__init__()
 
+        self.setGeometry(100, 100, 800, 600)
+        self.setWindowTitle('Likebox')
+
         self._controls = PlayerControls()
         self._sourcelist = PlayerSourceList()
         self._songtable = PlayerSongTable()
