@@ -11,7 +11,7 @@ class Player(QtGui.QMainWindow):
     def __init__(self):
         super(Player, self).__init__()
 
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 700, 500)
         self.setWindowTitle('Likebox')
 
         self._controls = PlayerControls()
@@ -87,6 +87,4 @@ class PlayerMenuBar(QtGui.QMenuBar):
 class PlayerListPicker(QtGui.QComboBox):
     def __init__(self):
         super(PlayerListPicker, self).__init__()        
-        self.addItem("Party in the Montana")        
-        self.addItem("Some unknow band")   
-
+        
