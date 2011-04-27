@@ -16,6 +16,7 @@ class Player(QtGui.QMainWindow):
         self._sourcelist = PlayerSourceList()
         self._songtable = PlayerSongTable()
         self._menubar = PlayerMenuBar()
+        self._playlistpicker = PlayerListPicker()
 
         mainWidget = QtGui.QWidget(self)
         self.setCentralWidget(mainWidget)
@@ -29,6 +30,7 @@ class Player(QtGui.QMainWindow):
         vbox.addWidget(splitter, 1)
 
         self.setMenuBar(self._menubar)
+        vbox.addWidget(self._playlistpicker)
 
 class PlayerControls(QtGui.QWidget):
     def __init__(self):
@@ -77,5 +79,9 @@ class PlayerMenuBar(QtGui.QMenuBar):
     def _on_remove_song(self, *args):
         pass
         
-        
+class PlayerListPicker(QtGui.QComboBox):
+    def __init__(self):
+        super(PlayerListPicker, self).__init__()        
+        self.addItem("Party in the Montana")        
+        self.addItem("Some unknow band")   
 
