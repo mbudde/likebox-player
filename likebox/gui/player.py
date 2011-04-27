@@ -15,6 +15,7 @@ class Player(QtGui.QMainWindow):
         self._controls = PlayerControls()
         self._sourcelist = PlayerSourceList()
         self._songtable = PlayerSongTable()
+        self._menubar = PlayerMenuBar()
 
         mainWidget = QtGui.QWidget(self)
         self.setCentralWidget(mainWidget)
@@ -26,6 +27,8 @@ class Player(QtGui.QMainWindow):
         splitter.addWidget(self._sourcelist)
         splitter.addWidget(self._songtable)
         vbox.addWidget(splitter, 1)
+
+        self.setMenuBar(self._menubar)
 
 class PlayerControls(QtGui.QWidget):
     def __init__(self):
@@ -50,3 +53,29 @@ class PlayerSourceList(QtGui.QListWidget):
 class PlayerSongTable(QtGui.QWidget):
     def __init__(self):
         super(PlayerSongTable, self).__init__()
+
+class PlayerMenuBar(QtGui.QMenuBar):
+    def __init__(self):
+        super(PlayerMenuBar, self).__init__()
+        
+        menuFile = self.addMenu('File')
+
+        Quit = QtGui.QAction("Quit", menuFile)
+        menuFile.addAction(Quit)
+        Quit.triggered.connect(self._on_quit)
+        
+
+        menuOptions = self.addMenu('Options')
+
+        RemoveSong = QtGui.QAction("Remove Song", menuOptions)       
+        menuOptions.addAction(RemoveSong)
+        RemoveSong.triggered.connect(self._on_remove_song)
+    
+    def _on_quit(self, *args):    
+        QtGui.qApp.quit()
+
+    def _on_remove_song(self, *args):
+        pass
+        
+        
+
