@@ -1,9 +1,15 @@
 
+import sys
+from PyQt4 import QtCore, QtGui
+
+from .gui.player import Player
 
 class Main(object):
 
     def __init__(self):
-        pass
+        self._app = QtGui.QApplication(sys.argv)
+        self._player = Player()
 
     def run(self):
-        return 0
+        self._player.show()
+        return self._app.exec_()

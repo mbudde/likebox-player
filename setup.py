@@ -15,6 +15,6 @@ setup(
     ],
     requires = [
         'PyQT',
-        'pyhon-mpd',
+        'python_mpd',
     ],
 )
