@@ -52,9 +52,10 @@ class PlayerSourceList(QtGui.QListWidget):
         QtGui.QListWidgetItem("Oak", self)
 
 
-class PlayerSongTable(QtGui.QWidget):
+class PlayerSongTable(QtGui.QTableWidget):
     def __init__(self):
         super(PlayerSongTable, self).__init__()
+        self.setColumnCount(4)
 
 class PlayerMenuBar(QtGui.QMenuBar):
     def __init__(self):
@@ -65,6 +66,7 @@ class PlayerMenuBar(QtGui.QMenuBar):
         Quit = QtGui.QAction("Quit", menuFile)
         menuFile.addAction(Quit)
         Quit.triggered.connect(self._on_quit)
+        Quit.setShortcut(QtGui.QKeySequence("Ctrl+q"))
         
 
         menuOptions = self.addMenu('Options')
