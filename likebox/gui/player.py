@@ -41,9 +41,11 @@ class PlayerControls(QtGui.QWidget):
         # self.connect(quit, QtCore.SIGNAL('clicked()'),
                      # QtGui.qApp, QtCore.SLOT('quit()'))
 
-class PlayerSourceList(QtGui.QWidget):
+class PlayerSourceList(QtGui.QListWidget):
     def __init__(self):
         super(PlayerSourceList, self).__init__()
+        QtGui.QListWidgetItem("Oak", self)
+
 
 class PlayerSongTable(QtGui.QWidget):
     def __init__(self):
