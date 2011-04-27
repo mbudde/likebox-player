@@ -75,30 +75,30 @@ class PlayerSongTable(QtGui.QTableWidget):
 class PlayerMenuBar(QtGui.QMenuBar):
     def __init__(self):
         super(PlayerMenuBar, self).__init__()
-        
+
         menuFile = self.addMenu('File')
 
         Quit = QtGui.QAction("Quit", menuFile)
         menuFile.addAction(Quit)
         Quit.triggered.connect(self._on_quit)
         Quit.setShortcut(QtGui.QKeySequence("Ctrl+q"))
-        
+
 
         menuOptions = self.addMenu('Options')
 
-        RemoveSong = QtGui.QAction("Remove Song", menuOptions)       
+        RemoveSong = QtGui.QAction("Remove Song", menuOptions)
         menuOptions.addAction(RemoveSong)
         RemoveSong.triggered.connect(self._on_remove_song)
-    
-    def _on_quit(self, *args):    
+
+    def _on_quit(self, *args):
         QtGui.qApp.quit()
 
     def _on_remove_song(self, *args):
         pass
-        
+
 class PlayerListPicker(QtGui.QComboBox):
     def __init__(self):
-        super(PlayerListPicker, self).__init__()        
-        self.addItem("Party in the Montana")        
-        self.addItem("Some unknow band")   
+        super(PlayerListPicker, self).__init__()
+        self.addItem("Party in the Montana")
+        self.addItem("Some unknow band")
 
