@@ -51,12 +51,6 @@ class Player(QtGui.QMainWindow):
         self._controls.next.connect(self._on_next)
         self._sourcelist.playlist_selected.connect(self._on_playlist_selected)
 
-    #     self._load_data()
-
-    # def _load_data(self):
-    #      for playlist in self._model.library.playlists:
-    #          self._sourcelist.addPlaylist(playlist.name)
-
     def _on_play(self, *args):
         songs = self._songview.getSelected()
         self._model.play(songs[0])
@@ -116,7 +110,9 @@ class PlayerSourceList(QtGui.QListWidget):
             return None
         return self._sources[str(items[0].text())]
 
+
 class PlayerSongView(QtGui.QTreeView):
+
     def __init__(self):
         super(PlayerSongView, self).__init__()
         self._song_model = SongListModel()
@@ -129,17 +125,19 @@ class PlayerSongView(QtGui.QTreeView):
         indexes = self.selectedIndexes()
         return [self._song_model.getSong(i) for i in indexes]
 
+
 class PlayerMenuBar(QtGui.QMenuBar):
+
     def __init__(self):
         super(PlayerMenuBar, self).__init__()
 
-        menu_file = self.addMenu('File')
+        menu_file = self.addMenu('Likebox')
         quit = QtGui.QAction("Quit", menu_file)
         quit.triggered.connect(self._on_quit)
         quit.setShortcut(QtGui.QKeySequence("Ctrl+q"))
         menu_file.addAction(quit)
 
-        menu_options = self.addMenu('Options')
+        menu_options = self.addMenu('Edit')
         remove_song = QtGui.QAction("Remove Song", menu_options)
         remove_song.triggered.connect(self._on_remove_song)
         menu_options.addAction(remove_song)
