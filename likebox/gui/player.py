@@ -23,7 +23,7 @@ class Player(QtGui.QMainWindow):
         self._sourcelist = PlayerSourceList(model)
         self._songview = PlayerSongView()
         self._menubar = PlayerMenuBar()
-        self._playlistpicker = PlayerListPicker()
+        self._playlistpicker = PlayerListPicker(model)
 
         mainWidget = QtGui.QWidget(self)
         self.setCentralWidget(mainWidget)
@@ -38,8 +38,13 @@ class Player(QtGui.QMainWindow):
         splitter.setStretchFactor(1, 1)
         vbox.addWidget(splitter, 1)
 
+        hbox = QtGui.QHBoxLayout()
+        hbox.addWidget(QtGui.QLabel('Take songs from:'))
+        hbox.addWidget(self._playlistpicker)
+        hbox.addStretch(1)
+        vbox.addLayout(hbox)
+
         self.setMenuBar(self._menubar)
-        vbox.addWidget(self._playlistpicker)
 
         self._controls.play.connect(self._on_play)
         self._controls.stop.connect(self._on_stop)
@@ -147,8 +152,14 @@ class PlayerMenuBar(QtGui.QMenuBar):
 
 
 class PlayerListPicker(QtGui.QComboBox):
-    def __init__(self):
+
+    def __init__(self, model):
         super(PlayerListPicker, self).__init__()
-        self.addItem("Party in the Montana")
-        self.addItem("Some unknow band")
+        self._sources = OrderedDict()
+        self._sources[model.queue.name] = model.queue
+        self._sources[model.library.name] = model.library
+        for playlist in model.library.playlists:
+            self._sources[playlist.name] = playlist
+        for name in self._sources.iterkeys():
+            self.addItem(name)
 
