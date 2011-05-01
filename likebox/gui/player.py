@@ -1,6 +1,7 @@
 
 from PyQt4 import QtCore, QtGui
 from nmevent import Event
+from collections import OrderedDict
 
 from .model import SongListModel
 
@@ -18,8 +19,8 @@ class Player(QtGui.QMainWindow):
         self.setGeometry(100, 100, 800, 600)
         self.setWindowTitle('Likebox')
 
-        self._controls = PlayerControls(model)
-        self._sourcelist = PlayerSourceList()
+        self._controls = PlayerControls()
+        self._sourcelist = PlayerSourceList(model)
         self._songview = PlayerSongView()
         self._menubar = PlayerMenuBar()
         self._playlistpicker = PlayerListPicker()
@@ -43,14 +44,13 @@ class Player(QtGui.QMainWindow):
         self._controls.play.connect(self._on_play)
         self._controls.stop.connect(self._on_stop)
         self._controls.next.connect(self._on_next)
+        self._sourcelist.playlist_selected.connect(self._on_playlist_selected)
 
-        self._loadData()
+    #     self._load_data()
 
-    def _loadData(self):
-        for playlist in self._model.playlists:
-            self._sourcelist.addPlaylist(playlist['playlist'])
-        self._songview.setSongs(self._model.songs)
-            # self._playlistpicker.add_playlist(playlist['playlist'])
+    # def _load_data(self):
+    #      for playlist in self._model.library.playlists:
+    #          self._sourcelist.addPlaylist(playlist.name)
 
     def _on_play(self, *args):
         songs = self._songview.getSelected()
@@ -62,16 +62,17 @@ class Player(QtGui.QMainWindow):
     def _on_next(self, *args):
         self._model.next()
 
+    def _on_playlist_selected(self):
+        self._songview.loadPlaylist(self._sourcelist.getSelectedPlaylist())
+
 class PlayerControls(QtGui.QWidget):
 
     play = QtCore.pyqtSignal()
     stop = QtCore.pyqtSignal()
     next = QtCore.pyqtSignal()
 
-    def __init__(self, model):
+    def __init__(self):
         super(PlayerControls, self).__init__()
-
-        self._model = model
 
         hbox = QtGui.QHBoxLayout(self)
         play = QtGui.QPushButton('Play')
@@ -82,20 +83,33 @@ class PlayerControls(QtGui.QWidget):
         hbox.addWidget(next)
         hbox.addStretch(1)
 
-        # play.clicked.connect(self._on_play)
         play.clicked.connect(self.play)
         stop.clicked.connect(self.stop)
         next.clicked.connect(self.next)
-        # stop.clicked.connect(model.stop)
 
 
 class PlayerSourceList(QtGui.QListWidget):
-    def __init__(self):
+
+    playlist_selected = QtCore.pyqtSignal()
+
+    def __init__(self, model):
         super(PlayerSourceList, self).__init__()
+        self._model = model
+        self._sources = OrderedDict()
+        self._sources[model.queue.name] = model.queue
+        self._sources[model.library.name] = model.library
+        for playlist in model.library.playlists:
+            self._sources[playlist.name] = playlist
+        for name in self._sources.iterkeys():
+            QtGui.QListWidgetItem(name, self)
 
-    def addPlaylist(self, name):
-        QtGui.QListWidgetItem(name, self)
+        self.itemSelectionChanged.connect(self.playlist_selected)
 
+    def getSelectedPlaylist(self):
+        items = self.selectedItems()
+        if len(items) == 0:
+            return None
+        return self._sources[str(items[0].text())]
 
 class PlayerSongView(QtGui.QTreeView):
     def __init__(self):
@@ -103,8 +117,8 @@ class PlayerSongView(QtGui.QTreeView):
         self._song_model = SongListModel()
         self.setModel(self._song_model)
 
-    def setSongs(self, songs):
-        self._song_model.setSongs(songs)
+    def loadPlaylist(self, playlist):
+        self._song_model.setSongs(playlist.songs)
 
     def getSelected(self):
         indexes = self.selectedIndexes()

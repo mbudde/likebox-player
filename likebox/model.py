@@ -2,6 +2,7 @@ from mpd import MPDClient
 from nmevent import Event
 
 from .song import Song
+from .playlist import Queue, Library
 
 class PlayerModel(object):
 
@@ -18,30 +19,25 @@ class PlayerModel(object):
         self._host = host
         self._port = port
         self._password = password
-
+        self._client = MPDClient()
+        self._queue = Queue(self._client)
+        self._library = Library(self._client)
         self._state = 'stop'
 
     def connect(self):
-        self._client = MPDClient()
         self._client.connect(self._host, self._port)
         if self._password is not None:
             self._client.password(self._password)
 
     @property
-    def songs(self):
-        return [i for i in self._client.listallinfo() if 'title' in i]
+    def queue(self):
+        return self._queue
 
     @property
-    def playlists(self):
-        return self._client.listplaylists()
-
-    def create_playlist(self, name, songs):
-        for song in songs:
-            self._client.playlistadd(name, song.file)
-        self._client.save(name)
+    def library(self):
+        return self._library
 
     def play(self, song=None):
-        print 'asdf'
         id = self._client.addid(song['file'])
         self._client.playid(id)
         self._state = 'play'
@@ -64,4 +60,4 @@ class PlayerModel(object):
 
     @property
     def current_song(self):
-        return self._client.currentsong
+        return self._client.currentsong()
