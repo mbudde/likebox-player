@@ -2,6 +2,8 @@
 from PyQt4 import QtCore, QtGui
 from nmevent import Event
 
+from .model import SongListModel
+
 class Player(QtGui.QMainWindow):
 
     play = Event()
@@ -16,9 +18,9 @@ class Player(QtGui.QMainWindow):
         self.setGeometry(100, 100, 800, 600)
         self.setWindowTitle('Likebox')
 
-        self._controls = PlayerControls()
+        self._controls = PlayerControls(model)
         self._sourcelist = PlayerSourceList()
-        self._songtable = PlayerSongTable()
+        self._songview = PlayerSongView()
         self._menubar = PlayerMenuBar()
         self._playlistpicker = PlayerListPicker()
 
@@ -30,23 +32,40 @@ class Player(QtGui.QMainWindow):
 
         splitter = QtGui.QSplitter(QtCore.Qt.Horizontal)
         splitter.addWidget(self._sourcelist)
-        splitter.addWidget(self._songtable)
+        splitter.addWidget(self._songview)
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 1)
         vbox.addWidget(splitter, 1)
 
         self.setMenuBar(self._menubar)
         vbox.addWidget(self._playlistpicker)
 
-        self.load_data()
+        self._controls.play.connect(self._on_play)
 
-    def load_data(self):
+        self._loadData()
+
+    def _loadData(self):
         for playlist in self._model.playlists:
             print playlist
-            self._sourcelist.add_playlist(playlist['playlist'])
-            self._playlistpicker.add_playlist(playlist['playlist'])
+            self._sourcelist.addPlaylist(playlist['playlist'])
+        self._songview.setSongs(self._model.songs)
+            # self._playlistpicker.add_playlist(playlist['playlist'])
+
+    def _on_play(self, *args):
+        print 'hasf'
+        print self._model
+        self._model.play()
+
 
 class PlayerControls(QtGui.QWidget):
-    def __init__(self):
+
+    play = QtCore.pyqtSignal()
+    stop = QtCore.pyqtSignal()
+
+    def __init__(self, model):
         super(PlayerControls, self).__init__()
+
+        self._model = model
 
         hbox = QtGui.QHBoxLayout(self)
         play = QtGui.QPushButton('Play')
@@ -55,46 +74,50 @@ class PlayerControls(QtGui.QWidget):
         hbox.addWidget(stop)
         hbox.addStretch(1)
 
-        # self.connect(quit, QtCore.SIGNAL('clicked()'),
-                     # QtGui.qApp, QtCore.SLOT('quit()'))
+        # play.clicked.connect(self._on_play)
+        play.clicked.connect(self.play)
+        # stop.clicked.connect(model.stop)
+
 
 class PlayerSourceList(QtGui.QListWidget):
     def __init__(self):
         super(PlayerSourceList, self).__init__()
 
-    def add_playlist(self, name):
+    def addPlaylist(self, name):
         QtGui.QListWidgetItem(name, self)
 
 
-class PlayerSongTable(QtGui.QTableWidget):
+class PlayerSongView(QtGui.QTreeView):
     def __init__(self):
-        super(PlayerSongTable, self).__init__()
-        self.setColumnCount(5)
-        self.setHorizontalHeaderLabels (("Title", "Artist", "Album", "Genre", "Time"))
+        super(PlayerSongView, self).__init__()
+        self._song_model = SongListModel()
+        self.setModel(self._song_model)
+
+    def setSongs(self, songs):
+        self._song_model.setSongs(songs)
+
 
 class PlayerMenuBar(QtGui.QMenuBar):
     def __init__(self):
         super(PlayerMenuBar, self).__init__()
 
-        menuFile = self.addMenu('File')
+        menu_file = self.addMenu('File')
+        quit = QtGui.QAction("Quit", menu_file)
+        quit.triggered.connect(self._on_quit)
+        quit.setShortcut(QtGui.QKeySequence("Ctrl+q"))
+        menu_file.addAction(quit)
 
-        Quit = QtGui.QAction("Quit", menuFile)
-        menuFile.addAction(Quit)
-        Quit.triggered.connect(self._on_quit)
-        Quit.setShortcut(QtGui.QKeySequence("Ctrl+q"))
-
-
-        menuOptions = self.addMenu('Options')
-
-        RemoveSong = QtGui.QAction("Remove Song", menuOptions)
-        menuOptions.addAction(RemoveSong)
-        RemoveSong.triggered.connect(self._on_remove_song)
+        menu_options = self.addMenu('Options')
+        remove_song = QtGui.QAction("Remove Song", menu_options)
+        remove_song.triggered.connect(self._on_remove_song)
+        menu_options.addAction(remove_song)
 
     def _on_quit(self, *args):
         QtGui.qApp.quit()
 
     def _on_remove_song(self, *args):
         pass
+
 
 class PlayerListPicker(QtGui.QComboBox):
     def __init__(self):
