@@ -16,7 +16,7 @@ class Player(QtGui.QMainWindow):
 
         self._model = model
 
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 700, 500)
         self.setWindowTitle('Likebox')
 
         self._controls = PlayerControls()
@@ -160,4 +160,3 @@ class PlayerListPicker(QtGui.QComboBox):
             self._sources[playlist.name] = playlist
         for name in self._sources.iterkeys():
             self.addItem(name)
-
