@@ -42,7 +42,8 @@ class PlayerModel(object):
 
     def play(self, song=None):
         print 'asdf'
-        self._client.play()
+        id = self._client.addid(song['file'])
+        self._client.playid(id)
         self._state = 'play'
         self.playing(self)
         print self._client.status()
@@ -57,6 +58,9 @@ class PlayerModel(object):
             self._client.pause(1)
             self._state = 'pause'
             self.paused(self)
+
+    def next(self):
+        self._client.next()
 
     @property
     def current_song(self):

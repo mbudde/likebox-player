@@ -41,26 +41,32 @@ class Player(QtGui.QMainWindow):
         vbox.addWidget(self._playlistpicker)
 
         self._controls.play.connect(self._on_play)
+        self._controls.stop.connect(self._on_stop)
+        self._controls.next.connect(self._on_next)
 
         self._loadData()
 
     def _loadData(self):
         for playlist in self._model.playlists:
-            print playlist
             self._sourcelist.addPlaylist(playlist['playlist'])
         self._songview.setSongs(self._model.songs)
             # self._playlistpicker.add_playlist(playlist['playlist'])
 
     def _on_play(self, *args):
-        print 'hasf'
-        print self._model
-        self._model.play()
+        songs = self._songview.getSelected()
+        self._model.play(songs[0])
 
+    def _on_stop(self, *args):
+        self._model.stop()
+
+    def _on_next(self, *args):
+        self._model.next()
 
 class PlayerControls(QtGui.QWidget):
 
     play = QtCore.pyqtSignal()
     stop = QtCore.pyqtSignal()
+    next = QtCore.pyqtSignal()
 
     def __init__(self, model):
         super(PlayerControls, self).__init__()
@@ -70,12 +76,16 @@ class PlayerControls(QtGui.QWidget):
         hbox = QtGui.QHBoxLayout(self)
         play = QtGui.QPushButton('Play')
         stop = QtGui.QPushButton('Stop')
+        next = QtGui.QPushButton('Next')
         hbox.addWidget(play)
         hbox.addWidget(stop)
+        hbox.addWidget(next)
         hbox.addStretch(1)
 
         # play.clicked.connect(self._on_play)
         play.clicked.connect(self.play)
+        stop.clicked.connect(self.stop)
+        next.clicked.connect(self.next)
         # stop.clicked.connect(model.stop)
 
 
@@ -96,6 +106,9 @@ class PlayerSongView(QtGui.QTreeView):
     def setSongs(self, songs):
         self._song_model.setSongs(songs)
 
+    def getSelected(self):
+        indexes = self.selectedIndexes()
+        return [self._song_model.getSong(i) for i in indexes]
 
 class PlayerMenuBar(QtGui.QMenuBar):
     def __init__(self):

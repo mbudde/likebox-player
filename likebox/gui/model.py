@@ -18,6 +18,11 @@ class SongListModel(QtCore.QAbstractItemModel):
     def songs(self):
         return self._songs
 
+    def getSong(self, index):
+        if not index.isValid():
+            return None
+        return self._songs[index.row()]
+
     def setSongs(self, songs):
         self.beginResetModel()
         self._songs = songs
@@ -26,9 +31,7 @@ class SongListModel(QtCore.QAbstractItemModel):
     def index(self, row, col, parent=None):
         if not parent.isValid():
             return self.createIndex(row, col)
-        print parent.row(), parent.column()
         return QtCore.QModelIndex()
-        # return QtCore.QModelIndex()
 
     def parent(self, index):
         return QtCore.QModelIndex()
@@ -42,10 +45,7 @@ class SongListModel(QtCore.QAbstractItemModel):
         return len(self._columns)
 
     def data(self, index, role=None):
-        print index.row(), index.column(), index.isValid()
-        if not (index.isValid() and
-                role == QtCore.Qt.DisplayRole and
-                index.row() < len(self._songs)):
+        if not (index.isValid() and role == QtCore.Qt.DisplayRole):
             return None
         song = self._songs[index.row()]
         key = self._columns[index.column()][1]
