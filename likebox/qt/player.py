@@ -11,10 +11,12 @@ class Player(QtGui.QMainWindow):
     stop = Event()
     pause = Event()
 
-    def __init__(self, model):
+    def __init__(self, model, idle):
         super(Player, self).__init__()
 
         self._model = model
+
+        idle.change.connect(self._on_change)
 
         self.setGeometry(100, 100, 700, 500)
         self.setWindowTitle('Likebox')
@@ -51,6 +53,8 @@ class Player(QtGui.QMainWindow):
         self._controls.next.connect(self._on_next)
         self._sourcelist.playlist_selected.connect(self._on_playlist_selected)
 
+        self._model.current_song_changed += self._controls.updateSongInfo
+
     def _on_play(self, *args):
         songs = self._songview.getSelected()
         self._model.play(songs[0])
@@ -63,6 +67,9 @@ class Player(QtGui.QMainWindow):
 
     def _on_playlist_selected(self):
         self._songview.loadPlaylist(self._sourcelist.getSelectedPlaylist())
+
+    def _on_change(self, change):
+        print change
 
 class PlayerControls(QtGui.QWidget):
 
@@ -80,12 +87,18 @@ class PlayerControls(QtGui.QWidget):
         hbox.addWidget(play)
         hbox.addWidget(stop)
         hbox.addWidget(next)
+
+        self._current_song = QtGui.QLabel('')
+        hbox.addWidget(self._current_song)
+
         hbox.addStretch(1)
 
         play.clicked.connect(self.play)
         stop.clicked.connect(self.stop)
         next.clicked.connect(self.next)
 
+    def updateSongInfo(self, song):
+        self._current_song.setText('{0[title]} by {0[artist]} from {0[album]}'.format(song))
 
 class PlayerSourceList(QtGui.QListWidget):
 

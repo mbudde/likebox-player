@@ -1,39 +1,88 @@
-from PyQt4.QtCore import QObject, pyqtSignal
 from mpd import MPDClient
-from pprint import pprint
-from .song import Song
+from nmevent import Event
+from select import select
 
-class Client(QObject):
+from .playlist import Queue, Library
 
-    # Signals
-    connected = pyqtSignal()
-    disconnected = pyqtSignal()
-
+class BaseClient(object):
 
     def __init__(self, host, port, password=None):
         self._host = host
         self._port = port
         self._password = password
-
-    def connect_client(self):
         self._client = MPDClient()
+
+    def connect(self):
         self._client.connect(self._host, self._port)
         if self._password is not None:
             self._client.password(self._password)
 
-    def get_songs(self):
-        return [Song(i) for i in self._client.listallinfo() if 'title' in i]
+    def disconnect(self):
+        self._client.disconnect()
 
-    def get_playlists(self):
-        return self._client.listplaylists()
+class Client(BaseClient):
 
-    def create_playlist(self, name, songs):
-        for song in songs:
-            self._client.playlistadd(name, song.file)
+    playing = Event()
+    stopped = Event()
+    paused = Event()
 
-if __name__ == '__main__':
-    c = Client('localhost', 6600)
-    c.connect_client()
-    # songs = c.get_songs()
-    # c.create_playlist("Playlist 1", songs[5:10])
-    pprint(c.get_playlists())
+    current_song_changed = Event()
+
+    songs_changed = Event()
+    playlist_deleted = Event()
+
+    def __init__(self, *args):
+        super(Client, self).__init__(*args)
+        self._queue = Queue(self._client)
+        self._library = Library(self._client)
+        self._state = 'stop'
+
+    @property
+    def queue(self):
+        return self._queue
+
+    @property
+    def library(self):
+        return self._library
+
+    def play(self, song=None):
+        id = self._client.addid(song['file'])
+        self._client.playid(id)
+        self._state = 'play'
+        self.playing(self)
+        print self._client.status()
+
+    def stop(self):
+        self._client.stop()
+        self._state = 'stop'
+
+    def pause(self):
+        status = self._client.status()
+        if status['state'] == 'play':
+            self._client.pause(1)
+            self._state = 'pause'
+            self.paused(self)
+
+    def next(self):
+        self._client.next()
+
+    @property
+    def current_song(self):
+        return self._client.currentsong()
+
+
+class IdleClient(BaseClient):
+
+    change = Event()
+
+    def __init__(self, *args, **kwargs):
+        super(IdleClient, self).__init__(*args, **kwargs)
+
+    def connect(self):
+        super(IdleClient, self).connect()
+        self._client.send_idle()
+
+    def wait_for_change(self):
+        select([self._client], [], [])
+        return self._client.fetch_idle()
+
