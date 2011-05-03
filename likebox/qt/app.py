@@ -2,8 +2,8 @@
 import sys
 from PyQt4 import QtCore, QtGui
 
-from .gui.player import Player
-from .model import PlayerModel
+from .player import Player
+from ..model import PlayerModel
 
 class Main(object):
 
