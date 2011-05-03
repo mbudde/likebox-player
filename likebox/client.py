@@ -1,6 +1,7 @@
 from mpd import MPDClient
 from nmevent import Event
 from select import select
+from threading import Thread
 
 from .playlist import Queue, Library
 
@@ -22,20 +23,16 @@ class BaseClient(object):
 
 class Client(BaseClient):
 
-    playing = Event()
-    stopped = Event()
-    paused = Event()
-
+    state_changed = Event()
     current_song_changed = Event()
-
-    songs_changed = Event()
-    playlist_deleted = Event()
 
     def __init__(self, *args):
         super(Client, self).__init__(*args)
         self._queue = Queue(self._client)
         self._library = Library(self._client)
         self._state = 'stop'
+        self._idle = IdleClient(*args)
+        self._idle.updates += self._on_update
 
     @property
     def queue(self):
@@ -45,44 +42,62 @@ class Client(BaseClient):
     def library(self):
         return self._library
 
+    @property
+    def current_song(self):
+        return self._client.currentsong()
+
+    @property
+    def state(self):
+        return self._state
+
+    def connect(self):
+        super(Client, self).connect()
+        self._idle.connect()
+
     def play(self, song=None):
         id = self._client.addid(song['file'])
         self._client.playid(id)
-        self._state = 'play'
-        self.playing(self)
-        print self._client.status()
+        self._set_state('play')
 
     def stop(self):
         self._client.stop()
-        self._state = 'stop'
+        self._set_state('stop')
 
     def pause(self):
         status = self._client.status()
         if status['state'] == 'play':
             self._client.pause(1)
-            self._state = 'pause'
-            self.paused(self)
+            self._set_state('pause')
 
     def next(self):
         self._client.next()
 
-    @property
-    def current_song(self):
-        return self._client.currentsong()
+    def _set_state(self, state):
+        self._state = state
+        self.state_changed(state)
+
+    def _on_update(self, sender, changes):
+        for change in changes:
+            if change == 'playlist':
+                self.queue.update()
 
 
-class IdleClient(BaseClient):
+class IdleClient(BaseClient, Thread):
 
-    change = Event()
+    updates = Event()
 
-    def __init__(self, *args, **kwargs):
-        super(IdleClient, self).__init__(*args, **kwargs)
+    def __init__(self, *args):
+        BaseClient.__init__(self, *args)
+        Thread.__init__(self)
 
     def connect(self):
         super(IdleClient, self).connect()
         self._client.send_idle()
+        self.daemon = True
+        self.start()
 
-    def wait_for_change(self):
-        select([self._client], [], [])
-        return self._client.fetch_idle()
-
+    def run(self):
+        while True:
+            select([self._client], [], [])
+            changes = self._client.fetch_idle()
+            self.updates(changes)

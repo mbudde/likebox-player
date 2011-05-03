@@ -11,21 +11,21 @@ class Player(QtGui.QMainWindow):
     stop = Event()
     pause = Event()
 
-    def __init__(self, model, idle):
+    def __init__(self, client):
         super(Player, self).__init__()
 
-        self._model = model
-
-        idle.change.connect(self._on_change)
+        self._client = client
+        # self._client.updates += self._on_update
+        # idle.change.connect(self._on_change)
 
         self.setGeometry(100, 100, 700, 500)
         self.setWindowTitle('Likebox')
 
         self._controls = PlayerControls()
-        self._sourcelist = PlayerSourceList(model)
+        self._sourcelist = PlayerSourceList(client)
         self._songview = PlayerSongView()
         self._menubar = PlayerMenuBar()
-        self._playlistpicker = PlayerListPicker(model)
+        self._playlistpicker = PlayerListPicker(client)
 
         mainWidget = QtGui.QWidget(self)
         self.setCentralWidget(mainWidget)
@@ -53,23 +53,27 @@ class Player(QtGui.QMainWindow):
         self._controls.next.connect(self._on_next)
         self._sourcelist.playlist_selected.connect(self._on_playlist_selected)
 
-        self._model.current_song_changed += self._controls.updateSongInfo
+        self._client.queue.updated += self._on_queue_updated
+        self._client.current_song_changed += self._controls.updateSongInfo
 
     def _on_play(self, *args):
         songs = self._songview.getSelected()
-        self._model.play(songs[0])
+        self._client.play(songs[0])
 
     def _on_stop(self, *args):
-        self._model.stop()
+        self._client.stop()
 
     def _on_next(self, *args):
-        self._model.next()
+        self._client.next()
 
     def _on_playlist_selected(self):
         self._songview.loadPlaylist(self._sourcelist.getSelectedPlaylist())
 
-    def _on_change(self, change):
+    def _on_update(self, sender, change):
         print change
+
+    def _on_queue_updated(self, sender):
+        print 'queue changed'
 
 class PlayerControls(QtGui.QWidget):
 
@@ -104,13 +108,13 @@ class PlayerSourceList(QtGui.QListWidget):
 
     playlist_selected = QtCore.pyqtSignal()
 
-    def __init__(self, model):
+    def __init__(self, client):
         super(PlayerSourceList, self).__init__()
-        self._model = model
+        self._client = client
         self._sources = OrderedDict()
-        self._sources[model.queue.name] = model.queue
-        self._sources[model.library.name] = model.library
-        for playlist in model.library.playlists:
+        self._sources[client.queue.name] = client.queue
+        self._sources[client.library.name] = client.library
+        for playlist in client.library.playlists:
             self._sources[playlist.name] = playlist
         for name in self._sources.iterkeys():
             QtGui.QListWidgetItem(name, self)
@@ -130,14 +134,21 @@ class PlayerSongView(QtGui.QTreeView):
         super(PlayerSongView, self).__init__()
         self._song_model = SongListModel()
         self.setModel(self._song_model)
+        self._playlist = None
 
     def loadPlaylist(self, playlist):
+        if self._playlist:
+            self._playlist.updated -= self._on_playlist_updated
+        self._playlist = playlist
+        self._playlist.updated += self._on_playlist_updated
         self._song_model.setSongs(playlist.songs)
 
     def getSelected(self):
         indexes = self.selectedIndexes()
         return [self._song_model.getSong(i) for i in indexes]
 
+    def _on_playlist_updated(self, sender):
+        self._song_model.setSongs(self._playlist.songs)
 
 class PlayerMenuBar(QtGui.QMenuBar):
 
@@ -164,12 +175,12 @@ class PlayerMenuBar(QtGui.QMenuBar):
 
 class PlayerListPicker(QtGui.QComboBox):
 
-    def __init__(self, model):
+    def __init__(self, client):
         super(PlayerListPicker, self).__init__()
         self._sources = OrderedDict()
-        self._sources[model.queue.name] = model.queue
-        self._sources[model.library.name] = model.library
-        for playlist in model.library.playlists:
+        self._sources[client.queue.name] = client.queue
+        self._sources[client.library.name] = client.library
+        for playlist in client.library.playlists:
             self._sources[playlist.name] = playlist
         for name in self._sources.iterkeys():
             self.addItem(name)
