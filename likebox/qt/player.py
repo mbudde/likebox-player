@@ -7,16 +7,10 @@ from .model import SongListModel
 
 class Player(QtGui.QMainWindow):
 
-    play = Event()
-    stop = Event()
-    pause = Event()
-
     def __init__(self, client):
         super(Player, self).__init__()
 
         self._client = client
-        # self._client.updates += self._on_update
-        # idle.change.connect(self._on_change)
 
         self.setGeometry(100, 100, 700, 500)
         self.setWindowTitle('Likebox')
@@ -51,20 +45,24 @@ class Player(QtGui.QMainWindow):
         self._controls.play.connect(self._on_play)
         self._controls.stop.connect(self._on_stop)
         self._controls.next.connect(self._on_next)
+        self._controls.add.connect(self._on_add)
         self._sourcelist.playlist_selected.connect(self._on_playlist_selected)
 
         self._client.queue.updated += self._on_queue_updated
         self._client.current_song_changed += self._controls.updateSongInfo
 
-    def _on_play(self, *args):
-        songs = self._songview.getSelected()
-        self._client.play(songs[0])
+    def _on_play(self):
+        self._client.play()
 
-    def _on_stop(self, *args):
+    def _on_stop(self):
         self._client.stop()
 
-    def _on_next(self, *args):
+    def _on_next(self):
         self._client.next()
+
+    def _on_add(self):
+        songs = self._songview.getSelected()
+        self._client.queue.add(songs[0])
 
     def _on_playlist_selected(self):
         self._songview.loadPlaylist(self._sourcelist.getSelectedPlaylist())
@@ -80,6 +78,7 @@ class PlayerControls(QtGui.QWidget):
     play = QtCore.pyqtSignal()
     stop = QtCore.pyqtSignal()
     next = QtCore.pyqtSignal()
+    add = QtCore.pyqtSignal()
 
     def __init__(self):
         super(PlayerControls, self).__init__()
@@ -88,9 +87,11 @@ class PlayerControls(QtGui.QWidget):
         play = QtGui.QPushButton('Play')
         stop = QtGui.QPushButton('Stop')
         next = QtGui.QPushButton('Next')
+        add = QtGui.QPushButton('Add to Queue')
         hbox.addWidget(play)
         hbox.addWidget(stop)
         hbox.addWidget(next)
+        hbox.addWidget(add)
 
         self._current_song = QtGui.QLabel('')
         hbox.addWidget(self._current_song)
@@ -100,6 +101,7 @@ class PlayerControls(QtGui.QWidget):
         play.clicked.connect(self.play)
         stop.clicked.connect(self.stop)
         next.clicked.connect(self.next)
+        add.clicked.connect(self.add)
 
     def updateSongInfo(self, song):
         self._current_song.setText('{0[title]} by {0[artist]} from {0[album]}'.format(song))

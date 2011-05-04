@@ -53,10 +53,14 @@ class Client(BaseClient):
     def connect(self):
         super(Client, self).connect()
         self._idle.connect()
+        self._state = self._client.status()['state']
+        self._client.consume(1)
 
-    def play(self, song=None):
-        id = self._client.addid(song['file'])
-        self._client.playid(id)
+    def play(self):
+        if self._state == 'pause':
+            self._client.pause(0)
+        elif self._state == 'stop':
+            self._client.play(0)
         self._set_state('play')
 
     def stop(self):
@@ -64,15 +68,17 @@ class Client(BaseClient):
         self._set_state('stop')
 
     def pause(self):
-        status = self._client.status()
-        if status['state'] == 'play':
+        if self._state == 'play':
             self._client.pause(1)
             self._set_state('pause')
 
     def next(self):
         self._client.next()
+        self.queue.update()
 
     def _set_state(self, state):
+        if self._state == state:
+            return
         self._state = state
         self.state_changed(state)
 

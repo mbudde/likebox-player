@@ -12,6 +12,7 @@ def memoized(f):
         return val
     return wrapper
 
+
 class Playlist(object):
 
     updated = Event()
@@ -65,3 +66,10 @@ class Queue(Playlist):
     def songs(self):
         print 'updating queue'
         return self._client.playlistinfo()
+
+    def add(self, song):
+        self._client.add(song['file'])
+        self.update()
+
+    def remove(self, song):
+        self._client.deleteid(song['file'])
