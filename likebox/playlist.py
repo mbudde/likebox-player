@@ -77,7 +77,6 @@ class Queue(Playlist):
     def add(self, song):
         """Add a song to the end of the queue."""
         self._client.add(song['file'])
-        self.update()
 
     def remove(self, song):
         """Remove song from the queue."""
