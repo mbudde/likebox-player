@@ -58,8 +58,8 @@ class Client(BaseClient):
     def connect(self):
         super(Client, self).connect()
         self._idle.connect()
-        self._state = self._client.status()['state']
         self._client.consume(1)
+        self._update_status()
 
     def play(self):
         if self._state == 'pause':
@@ -90,18 +90,19 @@ class Client(BaseClient):
     def rescan(self):
         self._client.update()
 
-    def _set_state(self, state):
-        if self._state == state:
-            return
-        logger.info('changing state to {0}'.format(state))
-        self._state = state
-        self.state_changed(state)
-
     def _on_update(self, sender, changes):
         for change in changes:
             logger.debug('idle update: {0}'.format(change))
             if change == 'playlist':
                 self.queue.update()
+            elif change == 'player':
+                self._update_status()
+
+    def _update_status(self):
+        status = self._client.status()
+        if self._state != status['state']:
+            self._state = status['state']
+            self.state_changed(self._state)
 
 
 class IdleClient(BaseClient, Thread):
@@ -118,12 +119,12 @@ class IdleClient(BaseClient, Thread):
 
     def connect(self):
         super(IdleClient, self).connect()
-        self._client.send_idle()
         self.daemon = True
         self.start()
 
     def run(self):
         while True:
+            self._client.send_idle()
             select([self._client], [], [])
             changes = self._client.fetch_idle()
             self.updates(changes)
