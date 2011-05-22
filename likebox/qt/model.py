@@ -1,5 +1,7 @@
 from PyQt4 import QtCore, QtGui
 
+from ..utils import format_time
+
 """
 class SourceListModel(QtCore.QAbstractItemModel):
 
@@ -66,7 +68,7 @@ class SongListModel(QtCore.QAbstractItemModel):
             ('Artist', 'artist'),
             ('Album', 'album'),
             ('Genre', 'genre'),
-            ('Time', 'time')
+            ('Time', 'time', format_time)
         )
         self._songs = []
 
@@ -104,8 +106,12 @@ class SongListModel(QtCore.QAbstractItemModel):
         if not (index.isValid() and role == QtCore.Qt.DisplayRole):
             return None
         song = self._songs[index.row()]
-        key = self._columns[index.column()][1]
-        return song[key]
+        key = self._columns[index.column()][1:]
+        if len(key) == 2:
+            key, formatter = key[0], key[1]
+            return formatter(song[key])
+        else:
+            return song[key[0]]
 
     def flags(self, index):
         if not index.isValid():
