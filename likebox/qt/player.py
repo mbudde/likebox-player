@@ -148,6 +148,7 @@ class PlayerSongView(QtGui.QTreeView):
         self._playlist = playlist
         self._playlist.updated += self._on_playlist_updated
         self._song_model.setSongs(playlist.songs)
+        self.header().resizeSections(QtGui.QHeaderView.Stretch)
 
     def getSelected(self):
         indexes = self.selectedIndexes()
