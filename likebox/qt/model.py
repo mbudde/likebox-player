@@ -103,7 +103,7 @@ class SongListModel(QtCore.QAbstractItemModel):
             return None
         song = self._songs[index.row()]
         key = self._columns[index.column()][1]
-        return song[key]
+        return song.get(key, None)
 
     def flags(self, index):
         if not index.isValid():

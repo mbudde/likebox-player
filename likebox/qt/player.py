@@ -53,12 +53,14 @@ class Player(QtGui.QMainWindow):
 
     def _on_play(self):
         self._client.play()
+        self._controls.updateSongInfo(self._client.current_song)
 
     def _on_stop(self):
         self._client.stop()
 
     def _on_next(self):
         self._client.next()
+        self._controls.updateSongInfo(self._client.current_song)
 
     def _on_add(self):
         songs = self._songview.getSelected()
