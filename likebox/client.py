@@ -73,6 +73,12 @@ class Client(BaseClient):
             self._client.pause(1)
             self._set_state('pause')
 
+    def playpause(self):
+        if self._state == 'play':
+            self.pause()
+        else:
+            self.play()
+
     def next(self):
         self._client.next()
         self.queue.update()

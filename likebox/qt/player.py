@@ -44,7 +44,8 @@ class Player(QtGui.QMainWindow):
 
         self.setMenuBar(self._menubar)
 
-        self._controls.play.connect(self._on_play)
+        self._controls.play.connect(self._on_playpause)
+        self._controls.pause.connect(self._on_playpause)
         self._controls.stop.connect(self._on_stop)
         self._controls.next.connect(self._on_next)
         self._controls.add.connect(self._on_add)
@@ -52,9 +53,12 @@ class Player(QtGui.QMainWindow):
 
         self._client.queue.updated += self._on_queue_updated
         self._client.current_song_changed += self._controls.updateSongInfo
+        self._client.state_changed += self._on_state_change
 
-    def _on_play(self):
-        self._client.play()
+        self._controls.updateState(client.state)
+
+    def _on_playpause(self):
+        self._client.playpause()
 
     def _on_stop(self):
         self._client.stop()
@@ -75,10 +79,14 @@ class Player(QtGui.QMainWindow):
     def _on_queue_updated(self, sender):
         print 'queue changed'
 
+    def _on_state_change(self, sender, state):
+        self._controls.updateState(state)
+
 
 class PlayerControls(QtGui.QWidget):
 
     play = QtCore.pyqtSignal()
+    pause = QtCore.pyqtSignal()
     stop = QtCore.pyqtSignal()
     next = QtCore.pyqtSignal()
     add = QtCore.pyqtSignal()
@@ -86,12 +94,14 @@ class PlayerControls(QtGui.QWidget):
     def __init__(self):
         super(PlayerControls, self).__init__()
 
+        self._playing = False
+
         hbox = QtGui.QHBoxLayout(self)
-        play = QtGui.QPushButton('Play')
+        self._playpause = QtGui.QPushButton('Play')
         stop = QtGui.QPushButton('Stop')
         next = QtGui.QPushButton('Next')
         add = QtGui.QPushButton('Add to Queue')
-        hbox.addWidget(play)
+        hbox.addWidget(self._playpause)
         hbox.addWidget(stop)
         hbox.addWidget(next)
         hbox.addWidget(add)
@@ -101,7 +111,7 @@ class PlayerControls(QtGui.QWidget):
 
         hbox.addStretch(1)
 
-        play.clicked.connect(self.play)
+        self._playpause.clicked.connect(self._on_playpause)
         stop.clicked.connect(self.stop)
         next.clicked.connect(self.next)
         add.clicked.connect(self.add)
@@ -109,6 +119,15 @@ class PlayerControls(QtGui.QWidget):
     def updateSongInfo(self, song):
         self._current_song.setText('{0[title]} by {0[artist]} from {0[album]}'.format(song))
 
+    def updateState(self, state):
+        self._playing = (state == 'play')
+        self._playpause.setText('Pause' if self._playing else 'Play')
+
+    def _on_playpause(self):
+        if self._playing:
+            self.pause.emit()
+        else:
+            self.play.emit()
 
 class PlayerSourceList(QtGui.QListWidget):
 
