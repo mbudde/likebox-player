@@ -7,6 +7,7 @@ from ..client import Client, IdleClient
 
 
 class Main(object):
+    """Main entry point for the Qt GUI application."""
 
     def __init__(self):
         self._app = QtGui.QApplication(sys.argv)

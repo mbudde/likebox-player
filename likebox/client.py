@@ -22,6 +22,7 @@ class BaseClient(object):
         self._client.disconnect()
 
 class Client(BaseClient):
+    """MPD client. Acts as a middleman between MPD and the GUI."""
 
     state_changed = Event()
     current_song_changed = Event()
@@ -89,6 +90,10 @@ class Client(BaseClient):
 
 
 class IdleClient(BaseClient, Thread):
+    """MPD idle client. Receives notification of events in MPD.
+
+    Runs in a seperate thread.
+    """
 
     updates = Event()
 

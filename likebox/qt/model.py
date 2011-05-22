@@ -55,6 +55,8 @@ class SourceListModel(QtCore.QAbstractItemModel):
 
 
 class SongListModel(QtCore.QAbstractItemModel):
+    """ItemModel for song table view. See Qt docs on
+    QAbstractItemModel."""
 
     def __init__(self, parent=None):
         super(SongListModel, self).__init__(parent)

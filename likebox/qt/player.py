@@ -5,7 +5,9 @@ from collections import OrderedDict
 
 from .model import SongListModel
 
+
 class Player(QtGui.QMainWindow):
+    """Player main GUI."""
 
     def __init__(self, client):
         super(Player, self).__init__()
@@ -73,6 +75,7 @@ class Player(QtGui.QMainWindow):
     def _on_queue_updated(self, sender):
         print 'queue changed'
 
+
 class PlayerControls(QtGui.QWidget):
 
     play = QtCore.pyqtSignal()
@@ -105,6 +108,7 @@ class PlayerControls(QtGui.QWidget):
 
     def updateSongInfo(self, song):
         self._current_song.setText('{0[title]} by {0[artist]} from {0[album]}'.format(song))
+
 
 class PlayerSourceList(QtGui.QListWidget):
 
@@ -151,6 +155,7 @@ class PlayerSongView(QtGui.QTreeView):
 
     def _on_playlist_updated(self, sender):
         self._song_model.setSongs(self._playlist.songs)
+
 
 class PlayerMenuBar(QtGui.QMenuBar):
 
