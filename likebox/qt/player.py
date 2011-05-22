@@ -56,10 +56,11 @@ class Player(QtGui.QMainWindow):
         self._menubar.rescan.connect(self._on_perform_rescan)
 
         self._client.queue.updated += self._on_queue_updated
-        self._client.current_song_changed += self._controls.updateSongInfo
+        self._client.current_song_changed += self._on_song_changed
         self._client.state_changed += self._on_state_change
 
         self._controls.updateState(client.state)
+        self._controls.updateSongInfo(client.current_song)
 
     def _on_playpause(self):
         self._client.playpause()
@@ -85,6 +86,9 @@ class Player(QtGui.QMainWindow):
 
     def _on_state_change(self, sender, state):
         self._controls.updateState(state)
+
+    def _on_song_changed(self, sender, song):
+        self._controls.updateSongInfo(song)
 
     def _on_perform_rescan(self):
         self._client.rescan()

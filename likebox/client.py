@@ -36,6 +36,7 @@ class Client(BaseClient):
         self._queue = Queue(self._client)
         self._library = Library(self._client)
         self._state = 'stop'
+        self._current_song = None
         self._idle = IdleClient(*args)
         self._idle.updates += self._on_update
 
@@ -100,6 +101,9 @@ class Client(BaseClient):
         if self._state != status['state']:
             self._state = status['state']
             self.state_changed(self._state)
+        if self._current_song != status['songid']:
+            self._current_song = status['songid']
+            self.current_song_changed(self.current_song)
 
 
 class IdleClient(BaseClient, Thread):
