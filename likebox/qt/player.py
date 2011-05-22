@@ -53,6 +53,7 @@ class Player(QtGui.QMainWindow):
         self._controls.next.connect(self._on_next)
         self._controls.add.connect(self._on_add)
         self._sourcelist.playlist_selected.connect(self._on_playlist_selected)
+        self._menubar.rescan.connect(self._on_perform_rescan)
 
         self._client.queue.updated += self._on_queue_updated
         self._client.current_song_changed += self._controls.updateSongInfo
@@ -85,6 +86,8 @@ class Player(QtGui.QMainWindow):
     def _on_state_change(self, sender, state):
         self._controls.updateState(state)
 
+    def _on_perform_rescan(self):
+        self._client.rescan()
 
 class PlayerControls(QtGui.QWidget):
 
@@ -182,14 +185,19 @@ class PlayerSongView(QtGui.QTreeView):
 
 class PlayerMenuBar(QtGui.QMenuBar):
 
+    rescan = QtCore.pyqtSignal()
+
     def __init__(self):
         super(PlayerMenuBar, self).__init__()
 
         menu_file = self.addMenu('Likebox')
-        quit = QtGui.QAction("Quit", menu_file)
-        quit.triggered.connect(self._on_quit)
-        quit.setShortcut(QtGui.QKeySequence("Ctrl+q"))
-        menu_file.addAction(quit)
+        item = QtGui.QAction("Rescan Music Library", menu_file)
+        item.triggered.connect(self.rescan)
+        menu_file.addAction(item)
+        item = QtGui.QAction("Quit", menu_file)
+        item.triggered.connect(self._on_quit)
+        item.setShortcut(QtGui.QKeySequence("Ctrl+q"))
+        menu_file.addAction(item)
 
         menu_options = self.addMenu('Edit')
         remove_song = QtGui.QAction("Remove Song", menu_options)

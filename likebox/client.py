@@ -87,6 +87,9 @@ class Client(BaseClient):
         self._client.next()
         self.queue.update()
 
+    def rescan(self):
+        self._client.update()
+
     def _set_state(self, state):
         if self._state == state:
             return
