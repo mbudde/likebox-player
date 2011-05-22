@@ -101,7 +101,7 @@ class Client(BaseClient):
         if self._state != status['state']:
             self._state = status['state']
             self.state_changed(self._state)
-        if self._current_song != status['songid']:
+        if self._current_song != status.get('songid', None):
             self._current_song = status['songid']
             self.current_song_changed(self.current_song)
 

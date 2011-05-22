@@ -128,7 +128,16 @@ class PlayerControls(QtGui.QWidget):
         add.clicked.connect(self.add)
 
     def updateSongInfo(self, song):
-        self._current_song.setText('{0[title]} by {0[artist]} from {0[album]}'.format(song))
+        if song == {}:
+            self._current_song.setText('')
+        else:
+            info = {
+                'title': 'Unknow title',
+                'artist': 'Unknow artist',
+                'album': 'Unknow album'
+            }
+            info.update(song)
+            self._current_song.setText('{0[title]} by {0[artist]} from {0[album]}'.format(info))
 
     def updateState(self, state):
         self._playing = (state == 'play')
