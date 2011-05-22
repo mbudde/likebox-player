@@ -59,8 +59,6 @@ class Player(QtGui.QMainWindow):
         self._client.current_song_changed += self._on_song_changed
         self._client.state_changed += self._on_state_change
 
-    def _on_play(self):
-        self._client.play()
         self._controls.updateState(client.state)
         self._controls.updateSongInfo(client.current_song)
 
@@ -72,7 +70,6 @@ class Player(QtGui.QMainWindow):
 
     def _on_next(self):
         self._client.next()
-        self._controls.updateSongInfo(self._client.current_song)
 
     def _on_add(self):
         songs = self._songview.getSelected()
