@@ -89,6 +89,7 @@ class Player(QtGui.QMainWindow):
     def _on_perform_rescan(self):
         self._client.rescan()
 
+
 class PlayerControls(QtGui.QWidget):
 
     play = QtCore.pyqtSignal()
@@ -134,6 +135,7 @@ class PlayerControls(QtGui.QWidget):
             self.pause.emit()
         else:
             self.play.emit()
+
 
 class PlayerSourceList(QtGui.QListWidget):
 
@@ -216,7 +218,6 @@ class PlayerListPicker(QtGui.QComboBox):
     def __init__(self, client):
         super(PlayerListPicker, self).__init__()
         self._sources = OrderedDict()
-        self._sources[client.queue.name] = client.queue
         self._sources[client.library.name] = client.library
         for playlist in client.library.playlists:
             self._sources[playlist.name] = playlist
