@@ -167,6 +167,7 @@ class PlayerSongView(QtGui.QTreeView):
         super(PlayerSongView, self).__init__()
         self._song_model = SongListModel()
         self.setModel(self._song_model)
+        self.header().setStretchLastSection(False)
         self._playlist = None
 
     def loadPlaylist(self, playlist):
