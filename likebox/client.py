@@ -5,6 +5,10 @@ from threading import Thread
 
 from .playlist import Queue, Library
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 class BaseClient(object):
 
     def __init__(self, host, port, password=None):
@@ -22,6 +26,7 @@ class BaseClient(object):
         self._client.disconnect()
 
 class Client(BaseClient):
+    """MPD client. Acts as a middleman between MPD and the GUI."""
 
     state_changed = Event()
     current_song_changed = Event()
@@ -31,6 +36,7 @@ class Client(BaseClient):
         self._queue = Queue(self._client)
         self._library = Library(self._client)
         self._state = 'stop'
+        self._current_song = None
         self._idle = IdleClient(*args)
         self._idle.updates += self._on_update
 
@@ -53,42 +59,58 @@ class Client(BaseClient):
     def connect(self):
         super(Client, self).connect()
         self._idle.connect()
-        self._state = self._client.status()['state']
         self._client.consume(1)
+        self._update_status()
 
     def play(self):
         if self._state == 'pause':
             self._client.pause(0)
         elif self._state == 'stop':
             self._client.play(0)
-        self._set_state('play')
 
     def stop(self):
         self._client.stop()
-        self._set_state('stop')
 
     def pause(self):
         if self._state == 'play':
             self._client.pause(1)
-            self._set_state('pause')
+
+    def playpause(self):
+        if self._state == 'play':
+            self.pause()
+        else:
+            self.play()
 
     def next(self):
         self._client.next()
         self.queue.update()
 
-    def _set_state(self, state):
-        if self._state == state:
-            return
-        self._state = state
-        self.state_changed(state)
+    def rescan(self):
+        self._client.update()
 
     def _on_update(self, sender, changes):
         for change in changes:
+            logger.debug('idle update: {0}'.format(change))
             if change == 'playlist':
                 self.queue.update()
+            elif change == 'player':
+                self._update_status()
+
+    def _update_status(self):
+        status = self._client.status()
+        if self._state != status['state']:
+            self._state = status['state']
+            self.state_changed(self._state)
+        if self._current_song != status['songid']:
+            self._current_song = status['songid']
+            self.current_song_changed(self.current_song)
 
 
 class IdleClient(BaseClient, Thread):
+    """MPD idle client. Receives notification of events in MPD.
+
+    Runs in a seperate thread.
+    """
 
     updates = Event()
 
@@ -98,12 +120,12 @@ class IdleClient(BaseClient, Thread):
 
     def connect(self):
         super(IdleClient, self).connect()
-        self._client.send_idle()
         self.daemon = True
         self.start()
 
     def run(self):
         while True:
+            self._client.send_idle()
             select([self._client], [], [])
             changes = self._client.fetch_idle()
             self.updates(changes)

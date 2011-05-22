@@ -1,8 +1,12 @@
 from nmevent import Event
 from functools import wraps
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def memoized(f):
+    """Memoization decorator. Saves the value for future calls"""
     @wraps(f)
     def wrapper(self):
         val = getattr(self, '_'+f.__name__, None)
@@ -14,6 +18,7 @@ def memoized(f):
 
 
 class Playlist(object):
+    """A list of songs with no order."""
 
     updated = Event()
 
@@ -37,6 +42,7 @@ class Playlist(object):
 
 
 class Library(Playlist):
+    """A playlist with all songs in the library."""
 
     def __init__(self, client):
         super(Library, self).__init__(client, 'Music')
@@ -57,6 +63,7 @@ class Library(Playlist):
 
 
 class Queue(Playlist):
+    """A play queue. Contains a list of songs in prioritized order."""
 
     def __init__(self, client):
         super(Queue, self).__init__(client, 'Play Queue')
@@ -64,12 +71,13 @@ class Queue(Playlist):
     @property
     @memoized
     def songs(self):
-        print 'updating queue'
+        logger.debug('updating queue')
         return self._client.playlistinfo()
 
     def add(self, song):
+        """Add a song to the end of the queue."""
         self._client.add(song['file'])
-        self.update()
 
     def remove(self, song):
+        """Remove song from the queue."""
         self._client.deleteid(song['file'])

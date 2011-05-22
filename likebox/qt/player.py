@@ -5,7 +5,12 @@ from collections import OrderedDict
 
 from .model import SongListModel
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 class Player(QtGui.QMainWindow):
+    """Player main GUI."""
 
     def __init__(self, client):
         super(Player, self).__init__()
@@ -42,18 +47,25 @@ class Player(QtGui.QMainWindow):
 
         self.setMenuBar(self._menubar)
 
-        self._controls.play.connect(self._on_play)
+        self._controls.play.connect(self._on_playpause)
+        self._controls.pause.connect(self._on_playpause)
         self._controls.stop.connect(self._on_stop)
         self._controls.next.connect(self._on_next)
         self._controls.add.connect(self._on_add)
         self._sourcelist.playlist_selected.connect(self._on_playlist_selected)
+        self._menubar.rescan.connect(self._on_perform_rescan)
 
         self._client.queue.updated += self._on_queue_updated
-        self._client.current_song_changed += self._controls.updateSongInfo
+        self._client.current_song_changed += self._on_song_changed
+        self._client.state_changed += self._on_state_change
 
     def _on_play(self):
         self._client.play()
-        self._controls.updateSongInfo(self._client.current_song)
+        self._controls.updateState(client.state)
+        self._controls.updateSongInfo(client.current_song)
+
+    def _on_playpause(self):
+        self._client.playpause()
 
     def _on_stop(self):
         self._client.stop()
@@ -70,14 +82,25 @@ class Player(QtGui.QMainWindow):
         self._songview.loadPlaylist(self._sourcelist.getSelectedPlaylist())
 
     def _on_update(self, sender, change):
-        print change
+        logger.debug(change)
 
     def _on_queue_updated(self, sender):
-        print 'queue changed'
+        logger.debug('queue changed')
+
+    def _on_state_change(self, sender, state):
+        self._controls.updateState(state)
+
+    def _on_song_changed(self, sender, song):
+        self._controls.updateSongInfo(song)
+
+    def _on_perform_rescan(self):
+        self._client.rescan()
+
 
 class PlayerControls(QtGui.QWidget):
 
     play = QtCore.pyqtSignal()
+    pause = QtCore.pyqtSignal()
     stop = QtCore.pyqtSignal()
     next = QtCore.pyqtSignal()
     add = QtCore.pyqtSignal()
@@ -85,12 +108,14 @@ class PlayerControls(QtGui.QWidget):
     def __init__(self):
         super(PlayerControls, self).__init__()
 
+        self._playing = False
+
         hbox = QtGui.QHBoxLayout(self)
-        play = QtGui.QPushButton('Play')
+        self._playpause = QtGui.QPushButton('Play')
         stop = QtGui.QPushButton('Stop')
         next = QtGui.QPushButton('Next')
         add = QtGui.QPushButton('Add to Queue')
-        hbox.addWidget(play)
+        hbox.addWidget(self._playpause)
         hbox.addWidget(stop)
         hbox.addWidget(next)
         hbox.addWidget(add)
@@ -100,13 +125,24 @@ class PlayerControls(QtGui.QWidget):
 
         hbox.addStretch(1)
 
-        play.clicked.connect(self.play)
+        self._playpause.clicked.connect(self._on_playpause)
         stop.clicked.connect(self.stop)
         next.clicked.connect(self.next)
         add.clicked.connect(self.add)
 
     def updateSongInfo(self, song):
         self._current_song.setText('{0[title]} by {0[artist]} from {0[album]}'.format(song))
+
+    def updateState(self, state):
+        self._playing = (state == 'play')
+        self._playpause.setText('Pause' if self._playing else 'Play')
+
+    def _on_playpause(self):
+        if self._playing:
+            self.pause.emit()
+        else:
+            self.play.emit()
+
 
 class PlayerSourceList(QtGui.QListWidget):
 
@@ -138,6 +174,7 @@ class PlayerSongView(QtGui.QTreeView):
         super(PlayerSongView, self).__init__()
         self._song_model = SongListModel()
         self.setModel(self._song_model)
+        self.header().setStretchLastSection(False)
         self._playlist = None
 
     def loadPlaylist(self, playlist):
@@ -146,6 +183,7 @@ class PlayerSongView(QtGui.QTreeView):
         self._playlist = playlist
         self._playlist.updated += self._on_playlist_updated
         self._song_model.setSongs(playlist.songs)
+        self.header().resizeSections(QtGui.QHeaderView.Stretch)
 
     def getSelected(self):
         indexes = self.selectedIndexes()
@@ -154,16 +192,22 @@ class PlayerSongView(QtGui.QTreeView):
     def _on_playlist_updated(self, sender):
         self._song_model.setSongs(self._playlist.songs)
 
+
 class PlayerMenuBar(QtGui.QMenuBar):
+
+    rescan = QtCore.pyqtSignal()
 
     def __init__(self):
         super(PlayerMenuBar, self).__init__()
 
         menu_file = self.addMenu('Likebox')
-        quit = QtGui.QAction("Quit", menu_file)
-        quit.triggered.connect(self._on_quit)
-        quit.setShortcut(QtGui.QKeySequence("Ctrl+q"))
-        menu_file.addAction(quit)
+        item = QtGui.QAction("Rescan Music Library", menu_file)
+        item.triggered.connect(self.rescan)
+        menu_file.addAction(item)
+        item = QtGui.QAction("Quit", menu_file)
+        item.triggered.connect(self._on_quit)
+        item.setShortcut(QtGui.QKeySequence("Ctrl+q"))
+        menu_file.addAction(item)
 
         menu_options = self.addMenu('Edit')
         remove_song = QtGui.QAction("Remove Song", menu_options)
@@ -182,7 +226,6 @@ class PlayerListPicker(QtGui.QComboBox):
     def __init__(self, client):
         super(PlayerListPicker, self).__init__()
         self._sources = OrderedDict()
-        self._sources[client.queue.name] = client.queue
         self._sources[client.library.name] = client.library
         for playlist in client.library.playlists:
             self._sources[playlist.name] = playlist

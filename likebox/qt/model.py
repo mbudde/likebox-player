@@ -1,5 +1,7 @@
 from PyQt4 import QtCore, QtGui
 
+from ..utils import format_time
+
 """
 class SourceListModel(QtCore.QAbstractItemModel):
 
@@ -55,16 +57,19 @@ class SourceListModel(QtCore.QAbstractItemModel):
 
 
 class SongListModel(QtCore.QAbstractItemModel):
+    """ItemModel for song table view. See Qt docs on
+    QAbstractItemModel."""
 
     def __init__(self, parent=None):
         super(SongListModel, self).__init__(parent)
 
         self._columns = (
-            ('Title', 'title'),
-            ('Artist', 'artist'),
-            ('Album', 'album'),
-            ('Genre', 'genre'),
-            ('Time', 'time')
+            ('Title', 'title', {}),
+            ('Artist', 'artist', {}),
+            ('Album', 'album', {}),
+            ('Genre', 'genre', {}),
+            ('Time', 'time', { 'formatter': format_time,
+                               'align': QtCore.Qt.AlignRight })
         )
         self._songs = []
 
@@ -99,11 +104,18 @@ class SongListModel(QtCore.QAbstractItemModel):
         return len(self._columns)
 
     def data(self, index, role=None):
-        if not (index.isValid() and role == QtCore.Qt.DisplayRole):
+        if not index.isValid():
             return None
-        song = self._songs[index.row()]
-        key = self._columns[index.column()][1]
-        return song.get(key, None)
+        title, key, opts = self._columns[index.column()]
+        if role == QtCore.Qt.DisplayRole:
+            song = self._songs[index.row()]
+            if 'formatter' in opts:
+                return opts['formatter'](song.get(key, None))
+            else:
+                return song.get(key, None)
+        elif role == QtCore.Qt.TextAlignmentRole:
+            return opts.get('align', QtCore.Qt.AlignLeft)
+        return None
 
     def flags(self, index):
         if not index.isValid():
@@ -111,6 +123,9 @@ class SongListModel(QtCore.QAbstractItemModel):
         return QtCore.Qt.ItemFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
 
     def headerData(self, section, orientation, role=None):
-        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
-            return self._columns[section][0]
+        if orientation == QtCore.Qt.Horizontal:
+            if role == QtCore.Qt.DisplayRole:
+                return self._columns[section][0]
+            elif role == QtCore.Qt.TextAlignmentRole:
+                return self._columns[section][2].get('align', QtCore.Qt.AlignLeft)
         return None
