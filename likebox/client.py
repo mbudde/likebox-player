@@ -66,16 +66,13 @@ class Client(BaseClient):
             self._client.pause(0)
         elif self._state == 'stop':
             self._client.play(0)
-        self._set_state('play')
 
     def stop(self):
         self._client.stop()
-        self._set_state('stop')
 
     def pause(self):
         if self._state == 'play':
             self._client.pause(1)
-            self._set_state('pause')
 
     def playpause(self):
         if self._state == 'play':
