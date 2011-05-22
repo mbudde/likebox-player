@@ -1,6 +1,9 @@
 from nmevent import Event
 from functools import wraps
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def memoized(f):
     """Memoization decorator. Saves the value for future calls"""
@@ -68,7 +71,7 @@ class Queue(Playlist):
     @property
     @memoized
     def songs(self):
-        print 'updating queue'
+        logger.debug('updating queue')
         return self._client.playlistinfo()
 
     def add(self, song):

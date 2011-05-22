@@ -5,6 +5,10 @@ from threading import Thread
 
 from .playlist import Queue, Library
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 class BaseClient(object):
 
     def __init__(self, host, port, password=None):
@@ -86,11 +90,13 @@ class Client(BaseClient):
     def _set_state(self, state):
         if self._state == state:
             return
+        logger.info('changing state to {0}'.format(state))
         self._state = state
         self.state_changed(state)
 
     def _on_update(self, sender, changes):
         for change in changes:
+            logger.debug('idle update: {0}'.format(change))
             if change == 'playlist':
                 self.queue.update()
 

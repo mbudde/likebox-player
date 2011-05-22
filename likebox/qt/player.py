@@ -5,6 +5,9 @@ from collections import OrderedDict
 
 from .model import SongListModel
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class Player(QtGui.QMainWindow):
     """Player main GUI."""
@@ -74,10 +77,10 @@ class Player(QtGui.QMainWindow):
         self._songview.loadPlaylist(self._sourcelist.getSelectedPlaylist())
 
     def _on_update(self, sender, change):
-        print change
+        logger.debug(change)
 
     def _on_queue_updated(self, sender):
-        print 'queue changed'
+        logger.debug('queue changed')
 
     def _on_state_change(self, sender, state):
         self._controls.updateState(state)
