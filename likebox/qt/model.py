@@ -110,9 +110,9 @@ class SongListModel(QtCore.QAbstractItemModel):
         if role == QtCore.Qt.DisplayRole:
             song = self._songs[index.row()]
             if 'formatter' in opts:
-                return opts['formatter'](song[key])
+                return opts['formatter'](song.get(key, None))
             else:
-                return song[key]
+                return song.get(key, None)
         elif role == QtCore.Qt.TextAlignmentRole:
             return opts.get('align', QtCore.Qt.AlignLeft)
         return None
