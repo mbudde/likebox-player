@@ -53,7 +53,10 @@ class Player(QtGui.QMainWindow):
         self._controls.next.connect(self._on_next)
         self._controls.add.connect(self._on_add)
         self._sourcelist.playlist_selected.connect(self._on_playlist_selected)
+
+        # Menubar signals
         self._menubar.rescan.connect(self._on_perform_rescan)
+        self._menubar.remove_song.connect(self._on_remove_song)
 
         self._client.queue.updated += self._on_queue_updated
         self._client.current_song_changed += self._on_song_changed
@@ -92,6 +95,11 @@ class Player(QtGui.QMainWindow):
 
     def _on_perform_rescan(self):
         self._client.rescan()
+
+    def _on_remove_song(self):
+        songs = self._songview.getSelected()
+        if self._songview.playlist and hasattr(self._songview.playlist, 'remove'):
+            map(self._songview.playlist.remove, songs)
 
 
 class PlayerControls(QtGui.QWidget):
@@ -183,6 +191,10 @@ class PlayerSongView(QtGui.QTreeView):
         self.header().setStretchLastSection(False)
         self._playlist = None
 
+    @property
+    def playlist(self):
+        return self._playlist
+
     def loadPlaylist(self, playlist):
         if self._playlist:
             self._playlist.updated -= self._on_playlist_updated
@@ -193,7 +205,7 @@ class PlayerSongView(QtGui.QTreeView):
 
     def getSelected(self):
         indexes = self.selectedIndexes()
-        return [self._song_model.getSong(i) for i in indexes]
+        return [self._song_model.getSong(i) for i in indexes if i.column() == 0]
 
     def _on_playlist_updated(self, sender):
         self._song_model.setSongs(self._playlist.songs)
@@ -202,29 +214,30 @@ class PlayerSongView(QtGui.QTreeView):
 class PlayerMenuBar(QtGui.QMenuBar):
 
     rescan = QtCore.pyqtSignal()
+    remove_song = QtCore.pyqtSignal()
 
     def __init__(self):
         super(PlayerMenuBar, self).__init__()
 
         menu_file = self.addMenu('Likebox')
-        item = QtGui.QAction("Rescan Music Library", menu_file)
-        item.triggered.connect(self.rescan)
-        menu_file.addAction(item)
-        item = QtGui.QAction("Quit", menu_file)
-        item.triggered.connect(self._on_quit)
-        item.setShortcut(QtGui.QKeySequence("Ctrl+q"))
-        menu_file.addAction(item)
+
+        action = QtGui.QAction("Rescan Music Library", menu_file)
+        action.triggered.connect(self.rescan)
+        menu_file.addAction(action)
+
+        action = QtGui.QAction("Quit", menu_file)
+        action.triggered.connect(self._on_quit)
+        action.setShortcut(QtGui.QKeySequence("Ctrl+q"))
+        menu_file.addAction(action)
 
         menu_options = self.addMenu('Edit')
-        remove_song = QtGui.QAction("Remove Song", menu_options)
-        remove_song.triggered.connect(self._on_remove_song)
-        menu_options.addAction(remove_song)
+
+        action = QtGui.QAction("Remove Song", menu_options)
+        action.triggered.connect(self.remove_song)
+        menu_options.addAction(action)
 
     def _on_quit(self, *args):
         QtGui.qApp.quit()
-
-    def _on_remove_song(self, *args):
-        pass
 
 
 class PlayerListPicker(QtGui.QComboBox):

@@ -80,4 +80,5 @@ class Queue(Playlist):
 
     def remove(self, song):
         """Remove song from the queue."""
-        self._client.deleteid(song['file'])
+        logger.debug('removing song with id {0}'.format(song['id']))
+        self._client.deleteid(song['id'])
