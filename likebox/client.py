@@ -25,6 +25,7 @@ class BaseClient(object):
     def disconnect(self):
         self._client.disconnect()
 
+
 class Client(BaseClient):
     """MPD client. Acts as a middleman between MPD and the GUI."""
 
@@ -57,35 +58,42 @@ class Client(BaseClient):
         return self._state
 
     def connect(self):
+        """Connect to MPD and update status"""
         super(Client, self).connect()
         self._idle.connect()
         self._client.consume(1)
         self._update_status()
 
     def play(self):
+        """Start playback"""
         if self._state == 'pause':
             self._client.pause(0)
         elif self._state == 'stop':
             self._client.play(0)
 
     def stop(self):
+        """Stop playback"""
         self._client.stop()
 
     def pause(self):
+        """Pause playback"""
         if self._state == 'play':
             self._client.pause(1)
 
     def playpause(self):
+        """Pause playback if playing, else start playback"""
         if self._state == 'play':
             self.pause()
         else:
             self.play()
 
     def next(self):
+        """Go to next song"""
         self._client.next()
         self.queue.update()
 
     def rescan(self):
+        """Rescan music library"""
         self._client.update()
 
     def _on_update(self, sender, changes):
@@ -119,6 +127,7 @@ class IdleClient(BaseClient, Thread):
         Thread.__init__(self)
 
     def connect(self):
+        """Connect to MPD and start thread"""
         super(IdleClient, self).connect()
         self.daemon = True
         self.start()
