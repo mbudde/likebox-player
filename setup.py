@@ -8,7 +8,8 @@ setup(
     description = 'Musicplayer with voting',
     author = 'Likebox developers',
     packages = [
-        'likebox'
+        'likebox',
+        'likebox.qt'
     ],
     scripts = [
         'bin/likebox',
