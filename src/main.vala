@@ -5,6 +5,9 @@ public class Likebox.Main : GLib.Object {
         var engine = new PlayerEngine (args);
         var mainloop = new MainLoop ();
 
+        Log.set_handler (null, LogLevelFlags.LEVEL_WARNING | LogLevelFlags.FLAG_FATAL
+                   | LogLevelFlags.FLAG_RECURSION, log_handler);
+
         engine.player_event.connect((s, e) => {
                 if (e == PlayerEngine.PlayerEvent.END_OF_STREAM) {
                     stdout.printf ("Song ended\n");
@@ -24,6 +27,10 @@ public class Likebox.Main : GLib.Object {
         engine.play ();
         mainloop.run ();
         return 0;
+    }
+
+    public static void log_handler (string? log_domain, LogLevelFlags log_levels, string message) {
+        stderr.printf (message);
     }
 
 }
