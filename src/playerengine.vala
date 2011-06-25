@@ -7,10 +7,8 @@ public class Likebox.PlayerEngine : GLib.Object {
     public signal void player_event (Event e);
 
     public PlayerEngine (string[] args) {
-        // Initializing GStreamer
         Gst.init (ref args);
 
-        // Creating pipeline and elements
         pipeline = new Gst.Pipeline ("pipeline");
         playbin = Gst.ElementFactory.make ("playbin2", "playbin");
         pipeline.add (playbin);
@@ -24,23 +22,27 @@ public class Likebox.PlayerEngine : GLib.Object {
         current_state = State.READY;
     }
 
+    [Description(nick = "current track")]
     public TrackInfo current_track {
         get;
         private set;
     }
 
+    [Description(nick = "current state of the engine")]
     public State current_state {
         get;
         private set;
     default = State.NOTREADY;
     }
 
-    public State last_state {
+    [Description(nick = "previous state of the engine")]
+    public State previous_state {
         get;
         private set;
     default = State.NOTREADY;
     }
 
+    [Description(nick = "volume")]
     public ushort volume {
         get {
             double volume;
@@ -54,6 +56,8 @@ public class Likebox.PlayerEngine : GLib.Object {
     }
 
     private static Gst.Format query_format = Gst.Format.TIME;
+
+    [Description(nick = "current position in the playing track")]
     public uint position {
         get {
             int64 pos;
@@ -65,6 +69,7 @@ public class Likebox.PlayerEngine : GLib.Object {
         }
     }
 
+    [Description(nick = "length of current track")]
     public uint length {
         get {
             int64 duration;
@@ -78,6 +83,9 @@ public class Likebox.PlayerEngine : GLib.Object {
         open_track (track);
     }
 
+    /**
+     * Opens the track for playing. Does not start playback.
+     */
     public void open_track (TrackInfo track) {
         if (current_state == State.PLAYING || current_state == State.PAUSED) {
             pipeline.set_state (Gst.State.READY);
@@ -94,7 +102,6 @@ public class Likebox.PlayerEngine : GLib.Object {
 
     public void play () {
         pipeline.set_state (Gst.State.PLAYING);
-        // set_state (State.PLAYING);
     }
 
     public void pause () {
@@ -102,12 +109,12 @@ public class Likebox.PlayerEngine : GLib.Object {
         set_state (State.PAUSED);
     }
 
-    protected void set_state (State state) {
+    private void set_state (State state) {
         if (current_state == state) {
             return;
         }
 
-        last_state = current_state;
+        previous_state = current_state;
         current_state = state;
         player_event (Event.STATE_CHANGE);
     }
