@@ -2,7 +2,8 @@ using Gst;
 
 public class Likebox.PlayerEngine : GLib.Object {
 
-    private Gst.Element pipeline;
+    private Gst.Pipeline pipeline;
+    private Gst.Element playbin;
 
     public signal void state_changed (PlayerState state);
     public signal void player_event (PlayerEvent e);
@@ -12,7 +13,9 @@ public class Likebox.PlayerEngine : GLib.Object {
         Gst.init (ref args);
 
         // Creating pipeline and elements
-        pipeline = ElementFactory.make ("playbin2", "pipeline");
+        pipeline = new Gst.Pipeline ("pipeline");
+        playbin = ElementFactory.make ("playbin2", "playbin");
+        pipeline.add (playbin);
         pipeline.set_state (Gst.State.READY);
 
         pipeline.get_bus ().add_watch (parse_message);
@@ -53,15 +56,17 @@ public class Likebox.PlayerEngine : GLib.Object {
     }
 
     public void open_uri (string uri) {
+        var track = new UnknownTrackInfo (uri);
+        open_track (track);
+    }
+
+    public void open_track (TrackInfo track) {
         if (current_state == PlayerState.PLAYING || current_state == PlayerState.PAUSED) {
             pipeline.set_state (State.READY);
         }
         set_state (PlayerState.LOADING);
-        pipeline.set ("uri", uri);
-    }
-
-    public void open_track (TrackInfo track) {
-        open_uri (track.uri);
+        playbin.set ("uri", track.uri);
+        current_track = track;
     }
 
     public void close () {
