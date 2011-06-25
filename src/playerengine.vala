@@ -100,6 +100,12 @@ public class Likebox.PlayerEngine : GLib.Object {
         set_state (State.IDLE);
     }
 
+    public void reset () {
+        current_track = null;
+        close ();
+        playbin.set ("uri", "");
+    }
+
     public void play () {
         pipeline.set_state (Gst.State.PLAYING);
     }
