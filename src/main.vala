@@ -9,10 +9,14 @@ public class Likebox.Main : GLib.Object {
                    | LogLevelFlags.FLAG_RECURSION, log_handler);
 
         engine.player_event.connect((s, e) => {
-                if (e == PlayerEngine.PlayerEvent.END_OF_STREAM) {
-                    stdout.printf ("Song ended\n");
-                    stdout.flush ();
+                switch (e) {
+                case PlayerEngine.PlayerEvent.END_OF_STREAM:
                     mainloop.quit ();
+                    break;
+                case PlayerEngine.PlayerEvent.VOLUME:
+                    stdout.printf ("volume: %u\n", engine.volume);
+                    stdout.flush ();
+                    break;
                 }
             });
 

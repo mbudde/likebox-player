@@ -18,6 +18,9 @@ public class Likebox.PlayerEngine : GLib.Object {
         pipeline.add (playbin);
         pipeline.set_state (Gst.State.READY);
 
+        playbin.notify["volume"].connect ((s, e) => {
+                player_event (PlayerEvent.VOLUME);
+            });
         pipeline.get_bus ().add_watch (parse_message);
 
         current_state = PlayerState.READY;
