@@ -40,19 +40,36 @@ public class Likebox.PlayerEngine : GLib.Object {
     default = PlayerState.NOTREADY;
     }
 
-    public uint volume {
-        get;
-        set;
+    public ushort volume {
+        get {
+            double volume;
+            playbin.get ("volume", out volume);
+            return (ushort) Math.lround (volume * 100.0);
+        }
+        set {
+            double volume = Math.fmin (1.0, Math.fmax (0, value / 100.0));
+            playbin.set ("volume", volume);
+        }
     }
 
+    private static Format query_format = Gst.Format.TIME;
     public uint position {
-        get;
-        set;
+        get {
+            int64 pos;
+            playbin.query_position (ref query_format, out pos);
+            return (uint) (pos / Gst.MSECOND);
+        }
+        set {
+            playbin.seek_simple (Gst.Format.TIME, Gst.SeekFlags.ACCURATE, (long)(value * Gst.MSECOND));
+        }
     }
 
     public uint length {
-        get;
-        private set;
+        get {
+            int64 duration;
+            playbin.query_duration (ref query_format, out duration);
+            return (uint) (duration / Gst.MSECOND);
+        }
     }
 
     public void open_uri (string uri) {
@@ -82,9 +99,6 @@ public class Likebox.PlayerEngine : GLib.Object {
     public void pause () {
         pipeline.set_state (State.PAUSED);
         set_state (PlayerState.PAUSED);
-    }
-
-    public void set_next_track (TrackInfo track) {
     }
 
     protected void set_state (PlayerState state) {
