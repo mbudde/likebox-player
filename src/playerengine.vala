@@ -19,7 +19,7 @@ public class Likebox.PlayerEngine : GLib.Object {
             });
         pipeline.get_bus ().add_watch (parse_message);
 
-        current_state = State.READY;
+        set_state (State.READY);
     }
 
     [Description(nick = "current track")]
@@ -123,6 +123,10 @@ public class Likebox.PlayerEngine : GLib.Object {
         previous_state = current_state;
         current_state = state;
         player_event (Event.STATE_CHANGE);
+
+        if (current_state == State.READY) {
+            set_state (State.IDLE);
+        }
     }
 
     private bool parse_message (Gst.Bus bus, Gst.Message message) {
