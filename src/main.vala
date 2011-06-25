@@ -10,14 +10,17 @@ public class Likebox.Main : GLib.Object {
 
         engine.player_event.connect((s, e) => {
                 switch (e) {
-                case PlayerEngine.PlayerEvent.END_OF_STREAM:
+                case PlayerEngine.Event.END_OF_STREAM:
                     mainloop.quit ();
                     break;
-                case PlayerEngine.PlayerEvent.VOLUME:
+                case PlayerEngine.Event.VOLUME:
                     stdout.printf ("volume: %u\n", engine.volume);
-                    stdout.flush ();
+                    break;
+                case PlayerEngine.Event.STATE_CHANGE:
+                    stdout.printf("state change: %s\n", engine.current_state.to_string());
                     break;
                 }
+                stdout.flush ();
             });
 
         if (args.length <= 1) {

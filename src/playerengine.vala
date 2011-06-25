@@ -1,12 +1,10 @@
-using Gst;
 
 public class Likebox.PlayerEngine : GLib.Object {
 
     private Gst.Pipeline pipeline;
     private Gst.Element playbin;
 
-    public signal void state_changed (PlayerState state);
-    public signal void player_event (PlayerEvent e);
+    public signal void player_event (Event e);
 
     public PlayerEngine (string[] args) {
         // Initializing GStreamer
@@ -14,16 +12,16 @@ public class Likebox.PlayerEngine : GLib.Object {
 
         // Creating pipeline and elements
         pipeline = new Gst.Pipeline ("pipeline");
-        playbin = ElementFactory.make ("playbin2", "playbin");
+        playbin = Gst.ElementFactory.make ("playbin2", "playbin");
         pipeline.add (playbin);
         pipeline.set_state (Gst.State.READY);
 
         playbin.notify["volume"].connect ((s, e) => {
-                player_event (PlayerEvent.VOLUME);
+                player_event (Event.VOLUME);
             });
         pipeline.get_bus ().add_watch (parse_message);
 
-        current_state = PlayerState.READY;
+        current_state = State.READY;
     }
 
     public TrackInfo current_track {
@@ -31,16 +29,16 @@ public class Likebox.PlayerEngine : GLib.Object {
         private set;
     }
 
-    public PlayerState current_state {
+    public State current_state {
         get;
         private set;
-    default = PlayerState.NOTREADY;
+    default = State.NOTREADY;
     }
 
-    public PlayerState last_state {
+    public State last_state {
         get;
         private set;
-    default = PlayerState.NOTREADY;
+    default = State.NOTREADY;
     }
 
     public ushort volume {
@@ -55,7 +53,7 @@ public class Likebox.PlayerEngine : GLib.Object {
         }
     }
 
-    private static Format query_format = Gst.Format.TIME;
+    private static Gst.Format query_format = Gst.Format.TIME;
     public uint position {
         get {
             int64 pos;
@@ -81,46 +79,49 @@ public class Likebox.PlayerEngine : GLib.Object {
     }
 
     public void open_track (TrackInfo track) {
-        if (current_state == PlayerState.PLAYING || current_state == PlayerState.PAUSED) {
-            pipeline.set_state (State.READY);
+        if (current_state == State.PLAYING || current_state == State.PAUSED) {
+            pipeline.set_state (Gst.State.READY);
         }
-        set_state (PlayerState.LOADING);
+        set_state (State.LOADING);
         playbin.set ("uri", track.uri);
         current_track = track;
     }
 
     public void close () {
-        pipeline.set_state (State.NULL);
-        set_state (PlayerState.READY);
+        pipeline.set_state (Gst.State.NULL);
+        set_state (State.IDLE);
     }
 
     public void play () {
-        pipeline.set_state (State.PLAYING);
-        set_state (PlayerState.PLAYING);
+        pipeline.set_state (Gst.State.PLAYING);
+        // set_state (State.PLAYING);
     }
 
     public void pause () {
-        pipeline.set_state (State.PAUSED);
-        set_state (PlayerState.PAUSED);
+        pipeline.set_state (Gst.State.PAUSED);
+        set_state (State.PAUSED);
     }
 
-    protected void set_state (PlayerState state) {
+    protected void set_state (State state) {
         if (current_state == state) {
             return;
         }
 
         last_state = current_state;
         current_state = state;
-        state_changed (state);
+        player_event (Event.STATE_CHANGE);
     }
 
     private bool parse_message (Gst.Bus bus, Gst.Message message) {
         switch (message.type) {
         case Gst.MessageType.EOS:
             close ();
-            player_event (PlayerEvent.END_OF_STREAM);
+            player_event (Event.END_OF_STREAM);
             break;
         case Gst.MessageType.STATE_CHANGED:
+            Gst.State old_state, new_state, pending_state;
+            message.parse_state_changed (out old_state, out new_state, out pending_state);
+            handle_state_change (old_state, new_state, pending_state);
             break;
         default:
             break;
@@ -128,7 +129,21 @@ public class Likebox.PlayerEngine : GLib.Object {
         return true;
     }
 
-    public enum PlayerState {
+    private void handle_state_change (Gst.State old_state, Gst.State new_state, Gst.State pending_state) {
+        if (current_state != State.LOADED && old_state == Gst.State.READY &&
+            new_state == Gst.State.PAUSED && pending_state == Gst.State.PLAYING) {
+            set_state (State.LOADED);
+        } else if (old_state == Gst.State.PAUSED && new_state == Gst.State.PLAYING && pending_state == Gst.State.VOID_PENDING) {
+            if (current_state == State.LOADED) {
+                player_event (Event.START_OF_STREAM);
+            }
+            set_state (State.PLAYING);
+        } else if (current_state == State.PLAYING && old_state == Gst.State.PLAYING && new_state == Gst.State.PAUSED) {
+            set_state (State.PAUSED);
+        }
+    }
+
+    public enum State {
         NOTREADY,
         READY,
         IDLE,
@@ -138,7 +153,7 @@ public class Likebox.PlayerEngine : GLib.Object {
         PAUSED
     }
 
-    public enum PlayerEvent {
+    public enum Event {
         NONE               = 0,
         ITERATE            = (1 << 1),
         STATE_CHANGE       = (1 << 2),
