@@ -150,8 +150,8 @@ public class Likebox.PlayerEngine : GLib.Object {
     private bool parse_message (Gst.Bus bus, Gst.Message message) {
         switch (message.type) {
         case Gst.MessageType.EOS:
-            close ();
             player_event (Event.END_OF_STREAM);
+            close ();
             break;
         case Gst.MessageType.STATE_CHANGED:
             Gst.State old_state, new_state, pending_state;
