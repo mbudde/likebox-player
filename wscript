@@ -29,15 +29,20 @@ def configure(conf):
         uselib_store    = 'GST',
         mandatory       = True,
         args            = '--cflags --libs')
+    conf.check_cfg(
+        package         = 'sqlite3',
+        uselib_store    = 'SQLITE',
+        mandatory       = True,
+        args            = '--cflags --libs')
 
     conf.load('vala', funs='')
-    conf.check_vala(min_version=(0, 13, 0))
+    conf.check_vala(min_version=(0, 13, 0), branch=(0, 14))
 
 def build(bld):
     bld.program(
-        packages      = 'gtk+-2.0 gstreamer-0.10',
+        packages      = 'gtk+-2.0 gstreamer-0.10 sqlite3',
         target        = 'likebox',
-        uselib        = 'GTK GLIB GST',
-        source        = bld.path.ant_glob('src/*.vala'),
+        uselib        = 'GTK GLIB GST SQLITE',
+        source        = bld.path.ant_glob('src/**/*.vala'),
         vala_defines  = ['DEBUG']
         )
