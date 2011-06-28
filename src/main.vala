@@ -19,34 +19,53 @@
 
 public class Likebox.Main : GLib.Object {
 
-    public static int main(string[] args) {
+    static bool debug_mode;
+    [CCode (array_length = false, array_null_terminated = true)]
+    static string[] filenames;
+
+    private const OptionEntry[] options = {
+        { "debug", 'd', 0, OptionArg.NONE, ref debug_mode, "Print debug messages" },
+        { "", 0, 0, OptionArg.FILENAME_ARRAY, ref filenames, null, "FILE" },
+        { null }
+    };
+
+    public static int main (string[] args) {
+        var context = new OptionContext ("");
+        context.add_main_entries (options, null);
+        context.parse (ref args);
+
+        if (filenames == null) {
+            printerr ("Missing filename\n");
+            return 1;
+        }
+
+        if (debug_mode) {
+            Log.set_handler (null, LogLevelFlags.LEVEL_WARNING | LogLevelFlags.FLAG_FATAL |
+                             LogLevelFlags.FLAG_RECURSION, log_handler);
+            debug ("debug mode is enabled");
+        }
+
         var engine = new PlayerEngine (args);
         var mainloop = new MainLoop ();
 
-        Log.set_handler (null, LogLevelFlags.LEVEL_WARNING | LogLevelFlags.FLAG_FATAL
-                   | LogLevelFlags.FLAG_RECURSION, log_handler);
-
-        engine.player_event.connect((s, e) => {
+        engine.player_event.connect ((s, e) => {
+                debug (@"player event: $e");
                 switch (e) {
                 case PlayerEngine.Event.END_OF_STREAM:
                     mainloop.quit ();
                     break;
                 case PlayerEngine.Event.VOLUME:
-                    stdout.printf ("volume: %u\n", engine.volume);
+                    debug ("volume: %u", engine.volume);
                     break;
                 case PlayerEngine.Event.STATE_CHANGE:
-                    stdout.printf("state change: %s\n", engine.current_state.to_string());
+                    debug ("state change: %s", engine.current_state.to_string ());
                     break;
                 }
                 stdout.flush ();
             });
 
-        if (args.length <= 1) {
-            stdout.printf("Missing filename\n");
-            return 1;
-        }
 
-        var uri = Filename.to_uri (args[1]);
+        var uri = Filename.to_uri (filenames[0]);
         var track = new UnknownTrackInfo (uri);
         engine.open_track (track);
         engine.play ();
@@ -55,7 +74,7 @@ public class Likebox.Main : GLib.Object {
     }
 
     public static void log_handler (string? log_domain, LogLevelFlags log_levels, string message) {
-        stderr.printf (message);
+        printerr (message);
     }
 
 }
