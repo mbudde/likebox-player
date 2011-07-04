@@ -39,10 +39,8 @@ public class Likebox.Main : GLib.Object {
             return 1;
         }
 
-        if (debug_mode) {
-            Log.set_handler (null, LogLevelFlags.LEVEL_WARNING | LogLevelFlags.FLAG_FATAL |
-                             LogLevelFlags.FLAG_RECURSION, log_handler);
-            debug ("debug mode is enabled");
+        if (!debug_mode) {
+            Log.set_default_handler ((d, l, m) => {});
         }
 
         var engine = new PlayerEngine (args);
@@ -75,6 +73,7 @@ public class Likebox.Main : GLib.Object {
 
     public static void log_handler (string? log_domain, LogLevelFlags log_levels, string message) {
         printerr (message);
+        printerr ("\n");
     }
 
 }
