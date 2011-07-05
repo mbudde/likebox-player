@@ -73,6 +73,19 @@ public class Likebox.PlayerEngine : GLib.Object {
         }
     }
 
+    [Description(nick = "mute state of volume")]
+    public bool mute {
+        get {
+            bool mute;
+            playbin.get ("mute", out mute);
+            return mute;
+        }
+        set {
+            playbin.set ("mute", value);
+        }
+    }
+
+
     private static Gst.Format query_format = Gst.Format.TIME;
 
     [Description(nick = "current position in the playing track")]
