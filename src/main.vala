@@ -32,10 +32,11 @@ public class Likebox.Main : GLib.Object {
     public static int main (string[] args) {
         var context = new OptionContext ("");
         context.add_main_entries (options, null);
-        context.parse (ref args);
-
-        if (filenames == null) {
-            printerr ("Missing filename\n");
+        try {
+            context.parse (ref args);
+        } catch (OptionError e) {
+            printerr (e.message);
+            printerr ("\n");
             return 1;
         }
 
@@ -43,32 +44,69 @@ public class Likebox.Main : GLib.Object {
             Log.set_default_handler ((d, l, m) => {});
         }
 
+        var collection = new TrackCollection ("likebox.db");
+        if (filenames != null) {
+            // Load tracks in database
+            foreach (var filename in filenames) {
+                string uri;
+                try {
+                    uri = Filename.to_uri (filename);
+                } catch (ConvertError e) {
+                    warning (e.message);
+                    continue;
+                }
+                var file = new TagLib.File (filename);
+                var track = new TrackInfo ();
+                track.uri = uri;
+                track.artist = file.tag.artist;
+                track.album = file.tag.album;
+                track.title = file.tag.title;
+                track.year = file.tag.year;
+                collection.save_track (track);
+                message ("saved track \"%s\"", track.title);
+            }
+        } else {
+            var tracks = collection.get_all_tracks ();
+            if (tracks.size == 0) {
+                printerr ("No tracks found. Aborting.\n");
+                return 1;
+            }
+            play_tracks (args, tracks);
+        }
+        return 0;
+    }
+
+    public static void play_tracks (string[] args, Gee.List<TrackInfo> tracks) {
         var engine = new PlayerEngine (args);
         var mainloop = new MainLoop ();
 
         engine.player_event.connect ((s, e) => {
-                debug (@"player event: $e");
                 switch (e) {
-                case PlayerEngine.Event.END_OF_STREAM:
-                    mainloop.quit ();
-                    break;
-                case PlayerEngine.Event.VOLUME:
-                    debug ("volume: %u", engine.volume);
+                case PlayerEngine.Event.START_OF_STREAM:
+                    message ("started playing \"%s\"", engine.current_track.title);
                     break;
                 case PlayerEngine.Event.STATE_CHANGE:
-                    debug ("state change: %s", engine.current_state.to_string ());
+                    if (engine.current_state == PlayerEngine.State.IDLE) {
+                        if (tracks.size > 0) {
+                            var track = tracks.remove_at (0);
+                            engine.open_track (track);
+                            engine.play ();
+                        } else {
+                            message ("no more tracks to play");
+                            mainloop.quit ();
+                        }
+                    } else {
+                        debug ("new state: %s", engine.current_state.to_string ());
+                    }
                     break;
                 }
                 stdout.flush ();
             });
 
-
-        var uri = Filename.to_uri (filenames[0]);
-        var track = new UnknownTrackInfo (uri);
+        var track = tracks.remove_at (0);
         engine.open_track (track);
         engine.play ();
         mainloop.run ();
-        return 0;
     }
 
     public static void log_handler (string? log_domain, LogLevelFlags log_levels, string message) {
