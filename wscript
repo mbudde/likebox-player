@@ -30,8 +30,18 @@ def configure(conf):
         mandatory       = True,
         args            = '--cflags --libs')
     conf.check_cfg(
+        package         = 'gee-1.0',
+        uselib_store    = 'GEE',
+        mandatory       = True,
+        args            = '--cflags --libs')
+    conf.check_cfg(
         package         = 'sqlite3',
         uselib_store    = 'SQLITE',
+        mandatory       = True,
+        args            = '--cflags --libs')
+    conf.check_cfg(
+        package         = 'taglib_c',
+        uselib_store    = 'TAGLIB',
         mandatory       = True,
         args            = '--cflags --libs')
 
@@ -40,9 +50,9 @@ def configure(conf):
 
 def build(bld):
     bld.program(
-        packages      = 'gtk+-2.0 gstreamer-0.10 sqlite3',
+        packages      = 'gtk+-2.0 gstreamer-0.10 sqlite3 gee-1.0 taglib_c',
         target        = 'likebox',
-        uselib        = 'GTK GLIB GST SQLITE',
+        uselib        = 'GTK GLIB GST GEE SQLITE TAGLIB',
         source        = bld.path.ant_glob('src/**/*.vala'),
         vala_defines  = ['DEBUG']
         )
